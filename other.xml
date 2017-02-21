@@ -15,4 +15,7 @@
       </profile-state>
     </entry>
   </component>
+  <component name="RefactoringSettings">
+    <option name="INTRODUCE_LOCAL_CREATE_FINALS" value="false" />
+  </component>
 </application>
