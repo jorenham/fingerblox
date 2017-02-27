@@ -1,4 +1,4 @@
-package org.tribler.fingerblox.fingerblox;
+package org.fingerblox.fingerblox;
 
 import org.junit.Test;
 

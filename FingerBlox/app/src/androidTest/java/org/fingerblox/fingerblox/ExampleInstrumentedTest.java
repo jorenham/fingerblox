@@ -1,4 +1,4 @@
-package org.tribler.fingerblox.fingerblox;
+package org.fingerblox.fingerblox;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("org.tribler.fingerblox.fingerblox", appContext.getPackageName());
+        assertEquals("org.fingerblox.fingerblox", appContext.getPackageName());
     }
 }
