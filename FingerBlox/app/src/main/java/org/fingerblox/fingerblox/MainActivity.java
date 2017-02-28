@@ -46,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
+    private ImageReader imageReader;
+    private CaptureRequest.Builder captureBuilder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,34 +134,19 @@ public class MainActivity extends AppCompatActivity {
         }
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
-            StreamConfigurationMap configMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            Size[] jpegSizes = null;
-            if (configMap != null) {
-                jpegSizes = configMap.getOutputSizes(ImageFormat.JPEG);
-            }
-            int width = 640;
-            int height = 480;
-            if (jpegSizes != null && 0 < jpegSizes.length) {
-                width = jpegSizes[0].getWidth();
-                height = jpegSizes[0].getHeight();
-            }
+            ImageReader reader = getImageReader(manager);
 
-            ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<>(2);
             outputSurfaces.add(reader.getSurface());
             outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
 
-            final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureBuilder.addTarget(reader.getSurface());
-            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, Surface.ROTATION_0);
+            final CaptureRequest.Builder captureBuilder = getCaptureBuilder(reader);
 
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
                     Image image = reader.acquireLatestImage();
-                    // TODO do something with image
+                    Log.i(TAG, String.format("Taken picture of %dx%d", image.getWidth(), image.getHeight()));
                     image.close();
                 }
             };
@@ -190,6 +177,36 @@ public class MainActivity extends AppCompatActivity {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    @NonNull
+    private CaptureRequest.Builder getCaptureBuilder(ImageReader reader) throws CameraAccessException {
+        if (captureBuilder == null) {
+            captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            captureBuilder.addTarget(reader.getSurface());
+            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+        }
+        return captureBuilder;
+    }
+
+    private ImageReader getImageReader(CameraManager manager) throws CameraAccessException {
+        if (imageReader == null) {
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
+            StreamConfigurationMap configMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            Size[] imgSizes = null;
+            if (configMap != null) {
+                imgSizes = configMap.getOutputSizes(ImageFormat.NV21);
+            }
+            int width = 640;
+            int height = 480;
+            if (imgSizes != null && 0 < imgSizes.length) {
+                width = imgSizes[0].getWidth();
+                height = imgSizes[0].getHeight();
+            }
+
+            imageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 1);
+        }
+        return imageReader;
     }
 
     protected void createCameraPreview() {
