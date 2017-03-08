@@ -1,0 +1,7 @@
+<application>
+  <component name="UISettings">
+    <option name="FONT_SIZE" value="14" />
+    <option name="COLOR_BLINDNESS" value="deuteranopia" />
+    <option name="OVERRIDE_NONIDEA_LAF_FONTS" value="true" />
+  </component>
+</application>
