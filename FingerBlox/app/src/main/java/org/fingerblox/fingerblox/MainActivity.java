@@ -3,6 +3,8 @@ package org.fingerblox.fingerblox;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -17,8 +19,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -30,6 +30,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -123,7 +124,15 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
                     Image image = reader.acquireLatestImage();
-                    Log.i(TAG, String.format("Taken picture of %dx%d", image.getWidth(), image.getHeight()));
+
+                    ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+                    byte[] bytes = new byte[buffer.capacity()];
+                    buffer.get(bytes);
+                    Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+                    bitmapImage.describeContents();
+
+                    Log.i(TAG, String.format("Bitmap contents: %d", bitmapImage.describeContents()));
+
                     image.close();
                 }
             };
@@ -179,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
             final int width = 640;
             final int height = 480;
 
-            imageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 1);
+            imageReader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
         }
         return imageReader;
     }
