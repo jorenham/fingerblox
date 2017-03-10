@@ -44,8 +44,6 @@ public class MainActivity extends AppCompatActivity {
     protected CaptureRequest.Builder captureRequestBuilder;
     private Size imageDimension;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
-    private Handler mBackgroundHandler;
-    private HandlerThread mBackgroundThread;
     private ImageReader imageReader;
     private CaptureRequest.Builder captureBuilder;
 
@@ -110,36 +108,15 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    protected void startBackgroundThread() {
-        mBackgroundThread = new HandlerThread("Camera Background");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
-    }
-
-    protected void stopBackgroundThread() {
-        mBackgroundThread.quitSafely();
-        try {
-            mBackgroundThread.join();
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     protected void takePicture() {
         if (null == cameraDevice) {
             Log.e(TAG, "cameraDevice is null");
             return;
         }
-        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+
         try {
-            ImageReader reader = getImageReader(manager);
-
-            List<Surface> outputSurfaces = new ArrayList<>(2);
-            outputSurfaces.add(reader.getSurface());
-            outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
-
+            ImageReader reader = getImageReader();
+            List<Surface> outputSurfaces = getOutputSurfaces(reader);
             final CaptureRequest.Builder captureBuilder = getCaptureBuilder(reader);
 
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
@@ -150,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
                     image.close();
                 }
             };
-            reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
+            reader.setOnImageAvailableListener(readerListener, null);
 
             final CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
                 @Override
@@ -164,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession session) {
                     try {
-                        session.capture(captureBuilder.build(), captureListener, mBackgroundHandler);
+                        session.capture(captureBuilder.build(), captureListener, null);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
@@ -173,10 +150,18 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession session) {
                 }
-            }, mBackgroundHandler);
+            }, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    @NonNull
+    private List<Surface> getOutputSurfaces(ImageReader reader) {
+        List<Surface> outputSurfaces = new ArrayList<>(2);
+        outputSurfaces.add(reader.getSurface());
+        outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
+        return outputSurfaces;
     }
 
     @NonNull
@@ -189,20 +174,10 @@ public class MainActivity extends AppCompatActivity {
         return captureBuilder;
     }
 
-    private ImageReader getImageReader(CameraManager manager) throws CameraAccessException {
+    private ImageReader getImageReader() throws CameraAccessException {
         if (imageReader == null) {
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
-            StreamConfigurationMap configMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            Size[] imgSizes = null;
-            if (configMap != null) {
-                imgSizes = configMap.getOutputSizes(ImageFormat.NV21);
-            }
-            int width = 640;
-            int height = 480;
-            if (imgSizes != null && 0 < imgSizes.length) {
-                width = imgSizes[0].getWidth();
-                height = imgSizes[0].getHeight();
-            }
+            final int width = 640;
+            final int height = 480;
 
             imageReader = ImageReader.newInstance(width, height, ImageFormat.YUV_420_888, 1);
         }
@@ -266,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
         }
         captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
         try {
-            cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), null, mBackgroundHandler);
+            cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), null, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -285,7 +260,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.e(TAG, "onResume");
-        startBackgroundThread();
         if (textureView.isAvailable()) {
             openCamera();
         } else {
@@ -297,7 +271,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         Log.e(TAG, "onPause");
         //closeCamera();
-        stopBackgroundThread();
         super.onPause();
     }
 }
