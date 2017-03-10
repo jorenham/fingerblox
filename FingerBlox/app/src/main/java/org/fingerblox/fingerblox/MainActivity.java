@@ -125,13 +125,8 @@ public class MainActivity extends AppCompatActivity {
                 public void onImageAvailable(ImageReader reader) {
                     Image image = reader.acquireLatestImage();
 
-                    ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-                    byte[] bytes = new byte[buffer.capacity()];
-                    buffer.get(bytes);
-                    Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
-                    bitmapImage.describeContents();
-
-                    Log.i(TAG, String.format("Bitmap contents: %d", bitmapImage.describeContents()));
+                    Bitmap bitmap = imageToBitmap(image.getPlanes()[0]);
+                    Log.i(TAG, String.format("Bitmap contents: %d", bitmap.describeContents()));
 
                     image.close();
                 }
@@ -163,6 +158,13 @@ public class MainActivity extends AppCompatActivity {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    private Bitmap imageToBitmap(Image.Plane plane) {
+        ByteBuffer buffer = plane.getBuffer();
+        byte[] bytes = new byte[buffer.capacity()];
+        buffer.get(bytes);
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
     }
 
     @NonNull
@@ -199,8 +201,12 @@ public class MainActivity extends AppCompatActivity {
             assert texture != null;
             texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
             Surface surface = new Surface(texture);
+
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             captureRequestBuilder.addTarget(surface);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF);
+
             cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
@@ -248,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
         if (null == cameraDevice) {
             Log.e(TAG, "updatePreview error, return");
         }
-        captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+
         try {
             cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), null, null);
         } catch (CameraAccessException e) {
