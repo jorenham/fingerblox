@@ -9,7 +9,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 public class CameraOverlayView extends View {
-    private final static int PADDING = 150;
+    public final static int PADDING = 300;
 
     private Paint borderPaint = new Paint();
     private Paint innerPaint = new Paint();
@@ -38,7 +38,7 @@ public class CameraOverlayView extends View {
 
         overlayRect.set(PADDING, PADDING, getWidth() - PADDING, getHeight() - PADDING);
 
-        canvas.drawRect(overlayRect, innerPaint);
-        canvas.drawRect(overlayRect, borderPaint);
+        canvas.drawOval(overlayRect, innerPaint);
+        canvas.drawOval(overlayRect, borderPaint);
     }
 }
