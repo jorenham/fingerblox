@@ -4,10 +4,11 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 
 import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -17,7 +18,7 @@ import org.opencv.core.Mat;
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener {
     public static final String TAG = "MainActivity";
 
-    private CameraBridgeViewBase mOpenCvCameraView;
+    private CameraView mOpenCvCameraView;
 
     static {
         if(!OpenCVLoader.initDebug()) {
@@ -49,9 +50,18 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.main);
 
-        mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_preview);
+        mOpenCvCameraView = (CameraView) findViewById(R.id.camera_preview);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
+
+        Button takePictureButton = (Button) findViewById(R.id.btn_takepicture);
+        assert takePictureButton != null;
+        takePictureButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mOpenCvCameraView.takePicture();
+            }
+        });
     }
 
     @Override
