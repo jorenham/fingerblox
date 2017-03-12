@@ -1,9 +1,11 @@
 package org.fingerblox.fingerblox;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
+import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
 
@@ -15,6 +17,8 @@ import java.util.Collections;
 
 public class CameraView extends JavaCameraView implements PictureCallback {
     private static final String TAG = "cameraView";
+
+    private PictureCallback pictureListener;
 
     public CameraView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -31,14 +35,15 @@ public class CameraView extends JavaCameraView implements PictureCallback {
         mCamera.takePicture(null, null, this);
     }
 
+    public void setPictureListener(PictureCallback listener) {
+        pictureListener = listener;
+    }
+
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
-        Log.i(TAG, "Picture taken!");
-        // The camera preview was automatically stopped. Start it again.
-        mCamera.startPreview();
-        mCamera.setPreviewCallback(this);
-
-        // TODO: Do something with image
+        if (pictureListener != null) {
+            pictureListener.onPictureTaken(data, camera);
+        }
     }
 
     @Override
