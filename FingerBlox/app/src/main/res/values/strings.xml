@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">FingerBlox</string>
     <string name="capture">Capture</string>
+
+    <string name="title_activity_image_display">ImageDisplayActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 </resources>
