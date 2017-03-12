@@ -60,25 +60,29 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
         Mat BGRImage = Imgcodecs.imdecode(new MatOfByte(imageData), Imgcodecs.CV_LOAD_IMAGE_UNCHANGED);
 
-        // Convert BGR to RGBA
+        // Convert BGR to Grayscale
         image = emptyMat(BGRImage.cols(), BGRImage.rows());
-        Imgproc.cvtColor(BGRImage, image, Imgproc.COLOR_BGR2RGBA, 4);
+        Imgproc.cvtColor(BGRImage, image, Imgproc.COLOR_BGR2GRAY, 4);
 
         image = rotateImage(image);
     }
 
     @NonNull
     private Mat emptyMat(int width, int height) {
-        return new Mat(width, height, CvType.CV_8U, new Scalar(4));
+        return new Mat(width, height, CvType.CV_8U, new Scalar(2));
     }
 
     protected void displayImage() {
-        Bitmap bmp = Bitmap.createBitmap(image.cols(), image.rows(), Bitmap.Config.ARGB_8888);
+        // To rgba
+        Mat rgbaMat = new Mat(image.width(), image.height(), CvType.CV_8U, new Scalar(4));
+        Imgproc.cvtColor(image, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
+
+        // to bitmap
+        Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(image, bmp);
 
         mImageView.setImageBitmap(bmp);
     }
-
 
     /**
      * OpenCV only supports landscape pictures, so we gotta rotate 90 degrees.
