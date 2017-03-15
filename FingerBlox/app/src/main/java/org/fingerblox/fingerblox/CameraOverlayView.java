@@ -9,8 +9,6 @@ import android.util.AttributeSet;
 import android.view.View;
 
 public class CameraOverlayView extends View {
-    private final static int PADDING = 150;
-
     private Paint borderPaint = new Paint();
     private Paint innerPaint = new Paint();
     private RectF overlayRect = new RectF();
@@ -27,6 +25,14 @@ public class CameraOverlayView extends View {
         super(context, attrs, defStyle);
     }
 
+    public static RectDimensions getDimensions(int width, int height) {
+        int padding = (int) (0.25 * width);
+        int bottom = 4 * padding;
+        if (bottom > height)
+            bottom = height;
+        return new RectDimensions(padding, padding, width - padding, bottom);
+    }
+
     @Override
     public void onDraw(Canvas canvas) {
         borderPaint.setColor(Color.MAGENTA);
@@ -36,9 +42,26 @@ public class CameraOverlayView extends View {
         innerPaint.setARGB(0, 0, 0, 0);
         innerPaint.setStyle(Paint.Style.FILL);
 
-        overlayRect.set(PADDING, PADDING, getWidth() - PADDING, getHeight() - PADDING);
+        RectDimensions d = getDimensions(getWidth(), getHeight());
 
-        canvas.drawRect(overlayRect, innerPaint);
-        canvas.drawRect(overlayRect, borderPaint);
+        overlayRect.set(d.left, d.top, d.right, d.bottom);
+
+        canvas.drawOval(overlayRect, innerPaint);
+        canvas.drawOval(overlayRect, borderPaint);
+    }
+}
+
+
+class RectDimensions {
+    public int left;
+    public int top;
+    public int right;
+    public int bottom;
+
+    public RectDimensions(int left, int top, int right, int bottom) {
+        this.left = left;
+        this.top = top;
+        this.bottom = bottom;
+        this.right = right;
     }
 }
