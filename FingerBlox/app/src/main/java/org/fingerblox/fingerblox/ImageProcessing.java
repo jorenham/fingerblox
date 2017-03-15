@@ -2,6 +2,7 @@ package org.fingerblox.fingerblox;
 
 
 import android.graphics.Bitmap;
+import android.graphics.Camera;
 import android.support.annotation.NonNull;
 
 import org.opencv.android.Utils;
@@ -9,6 +10,8 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
+import org.opencv.core.Range;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -21,20 +24,39 @@ public class ImageProcessing {
     }
 
     public Bitmap getProcessedImage(int screenWidth, int screenHeight) {
+        // Convert the bytearray to Mat
         Mat BGRImage = Imgcodecs.imdecode(new MatOfByte(data), Imgcodecs.CV_LOAD_IMAGE_UNCHANGED);
+
+        // Convert to grayscale
         Mat image = emptyMat(BGRImage.cols(), BGRImage.rows());
         Imgproc.cvtColor(BGRImage, image, Imgproc.COLOR_BGR2GRAY, 4);
 
+        // Rotate to match screen orientation
         image = rotateImage(image);
 
+        // Crop the part of the image that contains fingerprint
+        image = cropFingerprint(image);
+
+        // Convert to RGBA for bitmap conversion
         Mat rgbaMat = new Mat(image.width(), image.height(), CvType.CV_8U, new Scalar(4));
         Imgproc.cvtColor(image, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
 
-        // to bitmap
+        // Convert to Bitmap
         Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(image, bmp);
 
+        // Scale down the bitmap
         return getResizedBitmap(bmp, screenWidth, screenHeight);
+    }
+
+    private Mat cropFingerprint(Mat src) {
+        int rowStart = (int) (CameraOverlayView.PADDING * src.rows());
+        int rowEnd = (int) ((1 - CameraOverlayView.PADDING) * src.rows());
+        int colStart = (int) (CameraOverlayView.PADDING * src.cols());
+        int colEnd = (int) ((1 - CameraOverlayView.PADDING) * src.cols());
+        Range rowRange = new Range(rowStart, rowEnd);
+        Range colRange = new Range(colStart, colEnd);
+        return src.submat(rowRange, colRange);
     }
 
     private Bitmap getResizedBitmap(Bitmap original, int screenWidth, int screenHeight) {
