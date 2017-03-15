@@ -17,6 +17,8 @@ import java.util.Collections;
 
 public class CameraView extends JavaCameraView implements PictureCallback {
     private static final String TAG = "cameraView";
+    private static final int width = 2000;
+    private static final int height = 2000;
 
     private PictureCallback pictureListener;
 
@@ -54,11 +56,12 @@ public class CameraView extends JavaCameraView implements PictureCallback {
     }
 
     protected void setFixedFocusDistance() {
+
         Rect focusRect = new Rect(
-                -1000 + Math.round(CameraOverlayView.PADDING * 2000),
-                -1000 + Math.round(CameraOverlayView.PADDING * 2000),
-                1000 - Math.round(CameraOverlayView.PADDING * 2000),
-                1000 - Math.round(CameraOverlayView.PADDING * 2000)
+                Math.round(-(0.5f * width) + (CameraOverlayView.PADDING * width)),
+                Math.round(-(0.5f * height) + (CameraOverlayView.PADDING * height)),
+                Math.round((0.5f * width) - (CameraOverlayView.PADDING * width)),
+                Math.round((0.5f * height) - (CameraOverlayView.PADDING * height))
         );
 
         Camera.Area focusArea = new Camera.Area(focusRect, 1000);
