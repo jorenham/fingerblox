@@ -106,6 +106,12 @@ public class ImageProcessing {
         // Convert to bitmap
         Mat rgbaMat = new Mat(matEnhanced.width(), matEnhanced.height(), CvType.CV_8U, new Scalar(4));
         Imgproc.cvtColor(matEnhanced, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
+
+        // Rotate the image back to original orientation
+        for(int i=0; i<3; i++) {
+            rgbaMat = rotateImage(rgbaMat);
+        }
+
         Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(rgbaMat, bmp);
 
