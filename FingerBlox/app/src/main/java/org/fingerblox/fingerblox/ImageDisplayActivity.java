@@ -12,10 +12,7 @@ import org.opencv.core.Mat;
  * status bar and navigation/system bar) with user interaction.
  */
 public class ImageDisplayActivity extends AppCompatActivity {
-    public static final String TAG = "ImageDisplayActivity";
-
     private ImageView mImageView;
-    private Mat image;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

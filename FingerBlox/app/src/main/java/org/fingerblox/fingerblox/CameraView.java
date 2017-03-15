@@ -55,12 +55,8 @@ public class CameraView extends JavaCameraView implements PictureCallback {
 
     protected void setFixedFocusDistance() {
         Rect focusRect = new Rect();
-        focusRect.set(
-                CameraOverlayView.PADDING,
-                CameraOverlayView.PADDING,
-                getWidth() - CameraOverlayView.PADDING,
-                getHeight() - CameraOverlayView.PADDING
-        );
+        RectDimensions d = CameraOverlayView.getDimensions(getWidth(), getHeight());
+        focusRect.set(d.left, d.top, d.right, d.bottom);
         Camera.Area focusArea = new Camera.Area(focusRect, 1000);
         ArrayList<Camera.Area> focusAreaList = new ArrayList<>(Collections.singletonList(focusArea));
 

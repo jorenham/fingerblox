@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public static final String TAG = "MainActivity";
 
     private CameraView mOpenCvCameraView;
+    private Button takePictureButton;
 
     static {
         if(!OpenCVLoader.initDebug()) {
@@ -92,11 +93,13 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setPictureListener(pictureCallback);
 
-        Button takePictureButton = (Button) findViewById(R.id.btn_takepicture);
+        takePictureButton = (Button) findViewById(R.id.btn_takepicture);
+
         assert takePictureButton != null;
         takePictureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                takePictureButton.setEnabled(false);
                 mOpenCvCameraView.takePicture();
             }
         });
@@ -106,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public void onResume() {
         super.onResume();
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mLoaderCallback);
+        takePictureButton.setEnabled(true);
     }
 
     @Override

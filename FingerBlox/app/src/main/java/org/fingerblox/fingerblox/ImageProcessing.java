@@ -9,6 +9,7 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
+import org.opencv.core.Range;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -21,20 +22,37 @@ public class ImageProcessing {
     }
 
     public Bitmap getProcessedImage(int screenWidth, int screenHeight) {
+        // convert bytearray to Mat
         Mat BGRImage = Imgcodecs.imdecode(new MatOfByte(data), Imgcodecs.CV_LOAD_IMAGE_UNCHANGED);
-        Mat image = emptyMat(BGRImage.cols(), BGRImage.rows());
-        Imgproc.cvtColor(BGRImage, image, Imgproc.COLOR_BGR2GRAY, 4);
 
-        image = rotateImage(image);
+        // Rotate image to match screen orientation
+        BGRImage = rotateImage(BGRImage);
 
+        // Crop the part of the image which contains fingerprint
+        Mat fingerPrintImage = getFingerprintMat(BGRImage);
+
+        // Convert to Grayscale
+        Mat image = emptyMat(fingerPrintImage .cols(), fingerPrintImage .rows());
+        Imgproc.cvtColor(fingerPrintImage, image, Imgproc.COLOR_BGR2GRAY, 4);
+
+        // Convert the grayscale image to RGBA codec to be converted to Bitmap
         Mat rgbaMat = new Mat(image.width(), image.height(), CvType.CV_8U, new Scalar(4));
         Imgproc.cvtColor(image, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
 
-        // to bitmap
+        // Convert to bitmap
         Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(image, bmp);
 
+        // Return scaled down bitmap
         return getResizedBitmap(bmp, screenWidth, screenHeight);
+    }
+
+    // Get the part of the image that contains the fingerprint
+    private Mat getFingerprintMat(Mat image) {
+        RectDimensions d = CameraOverlayView.getDimensions(image.width(), image.height());
+        Range rowRange = new Range(d.top, d.bottom);
+        Range colRange = new Range(d.left, d.right);
+        return image.submat(rowRange, colRange);
     }
 
     private Bitmap getResizedBitmap(Bitmap original, int screenWidth, int screenHeight) {
