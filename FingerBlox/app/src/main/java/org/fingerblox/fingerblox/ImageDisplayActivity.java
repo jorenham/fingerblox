@@ -24,9 +24,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
         setContentView(R.layout.activity_image_display);
         mImageView = (ImageView) findViewById(R.id.image_view);
 
-        Bundle bundle = getIntent().getExtras();
-        Bitmap bmp = (Bitmap) bundle.get("CAPTURED_IMAGE");
-        mImageView.setImageBitmap(bmp);
+        mImageView.setImageBitmap(ImageSingleton.image);
     }
 
     @Override

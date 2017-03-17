@@ -31,7 +31,7 @@ public class ImageProcessing {
         Imgproc.cvtColor(image, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
 
         // to bitmap
-        Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
+        Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.RGB_565);
         Utils.matToBitmap(image, bmp);
 
         return getResizedBitmap(bmp, screenWidth, screenHeight);
@@ -43,9 +43,6 @@ public class ImageProcessing {
         float xRatio = (float)screenWidth / (float)imageWidth;
         float yRatio = (float)screenHeight / (float)imageHeight;
         float ratio = (xRatio < yRatio) ? xRatio : yRatio;
-
-        // scale down the image in order to transfer it to ImageDisplayActivity using Intent
-        ratio = ratio / 4;
 
         if (ratio >= 1) return original;
 
