@@ -35,42 +35,36 @@ public class ImageProcessing {
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
     public Bitmap getProcessedImage() {
-        // Scale down the image for performance
-        float scaleDownFactor = 0.5f;
-        Bitmap tmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-        tmp = Bitmap.createScaledBitmap(tmp,
-                                        (int)(tmp.getWidth()*scaleDownFactor),
-                                        (int)(tmp.getHeight()*scaleDownFactor),
-                                        true);
-        Mat BGRImage = new Mat (tmp.getWidth(), tmp.getHeight(), CvType.CV_8UC1);
-        Utils.bitmapToMat(tmp, BGRImage);
+        Mat image = BGRToGray(data);
+        image = rotateImage(image);
+        image = cropFingerprint(image);
 
-        // Rotate image to match screen orientation
-        BGRImage = rotateImage(BGRImage);
-
-        // Crop the part of the image that contains the fingerprint
-        Mat fingerPrintImage = cropFingerprint(BGRImage);
-
-        // Convert to grayscale
-        Mat grayScale = new Mat(fingerPrintImage.rows(), fingerPrintImage.cols(), CvType.CV_8UC1);
-        Imgproc.cvtColor(fingerPrintImage, grayScale, Imgproc.COLOR_BGR2GRAY, 4);
-
-        int rows = grayScale.rows();
-        int cols = grayScale.cols();
+        int rows = image.rows();
+        int cols = image.cols();
 
         // apply histogram equalization
         Mat equalized = new Mat(rows, cols, CvType.CV_32FC1);
-        Imgproc.equalizeHist(grayScale, equalized);
+        Imgproc.equalizeHist(image, equalized);
 
         // convert to float, very important
         Mat floated = new Mat(rows, cols, CvType.CV_32FC1);
         equalized.convertTo(floated, CvType.CV_32FC1);
 
+        Mat skeleton = getSkeletonImage(floated, rows, cols);
 
+        // Rotate the image back to original orientation
+        for(int i=0; i<3; i++) {
+            skeleton = rotateImage(skeleton);
+        }
+
+        return mat2Bitmap(skeleton);
+    }
+
+    private Mat getSkeletonImage(Mat src, int rows, int cols) {
         // step 1: get ridge segment by padding then do block process
         int blockSize = 24;
         double threshold = 0.05;
-        Mat padded = imagePadding(floated, blockSize);
+        Mat padded = imagePadding(src, blockSize);
 
         int imgRows = padded.rows();
         int imgCols = padded.cols();
@@ -103,19 +97,14 @@ public class ImageProcessing {
         Mat matEnhanced = new Mat(imgRows, imgCols, CvType.CV_8UC1);
         enhancement(matRidgeFilter, matEnhanced, blockSize, rows, cols);
 
-        // Convert to bitmap
-        Mat rgbaMat = new Mat(matEnhanced.width(), matEnhanced.height(), CvType.CV_8U, new Scalar(4));
-        Imgproc.cvtColor(matEnhanced, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
+        return matEnhanced;
+    }
 
-        // Rotate the image back to original orientation
-        for(int i=0; i<3; i++) {
-            rgbaMat = rotateImage(rgbaMat);
-        }
-
+    private Bitmap mat2Bitmap(Mat src) {
+        Mat rgbaMat = new Mat(src.width(), src.height(), CvType.CV_8U, new Scalar(4));
+        Imgproc.cvtColor(src, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
         Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(rgbaMat, bmp);
-
-        // Return scaled down bitmap
         return bmp;
     }
 
@@ -129,44 +118,20 @@ public class ImageProcessing {
         return src.submat(rowRange, colRange);
     }
 
-    private Bitmap getResizedBitmap(Bitmap original, int screenWidth, int screenHeight) {
-        int imageWidth = original.getWidth();
-        int imageHeight = original.getHeight();
-        float xRatio = (float) screenWidth / (float) imageWidth;
-        float yRatio = (float) screenHeight / (float) imageHeight;
-        float ratio = (xRatio < yRatio) ? xRatio : yRatio;
-
-        // scale down the image in order to transfer it to ImageDisplayActivity using Intent
-        ratio = ratio / 4;
-
-        if (ratio >= 1) return original;
-
-        int newWidth = (int) (ratio * imageWidth);
-        int newHeight = (int) (ratio * imageHeight);
-
-        return Bitmap.createScaledBitmap(original, newWidth, newHeight, true);
-    }
-
     @NonNull
-    private Mat BGRToGray(byte[] image) {
-        Mat BGRImage = Imgcodecs.imdecode(new MatOfByte(image), Imgcodecs.CV_LOAD_IMAGE_UNCHANGED);
+    private Mat BGRToGray(byte[] data) {
+        // Scale down the image for performance
+        float scaleDownFactor = 0.5f;
+        Bitmap tmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+        tmp = Bitmap.createScaledBitmap(tmp,
+                (int)(tmp.getWidth()*scaleDownFactor),
+                (int)(tmp.getHeight()*scaleDownFactor),
+                true);
+        Mat BGRImage = new Mat (tmp.getWidth(), tmp.getHeight(), CvType.CV_8UC1);
+        Utils.bitmapToMat(tmp, BGRImage);
         Mat res = emptyMat(BGRImage.cols(), BGRImage.rows());
         Imgproc.cvtColor(BGRImage, res, Imgproc.COLOR_BGR2GRAY, 4);
         return res;
-    }
-
-    @NonNull
-    private Bitmap toBitmap(Mat image, Mat rgbaMat) {
-        Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.RGB_565);
-        Utils.matToBitmap(image, bmp);
-        return bmp;
-    }
-
-    @NonNull
-    private Mat grayToRGBA(Mat image) {
-        Mat rgbaMat = new Mat(image.width(), image.height(), CvType.CV_8U, new Scalar(4));
-        Imgproc.cvtColor(image, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
-        return rgbaMat;
     }
 
     @NonNull
