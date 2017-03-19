@@ -132,8 +132,8 @@ public class ImageProcessing {
     private Bitmap getResizedBitmap(Bitmap original, int screenWidth, int screenHeight) {
         int imageWidth = original.getWidth();
         int imageHeight = original.getHeight();
-        float xRatio = (float)screenWidth / (float)imageWidth;
-        float yRatio = (float)screenHeight / (float)imageHeight;
+        float xRatio = (float) screenWidth / (float) imageWidth;
+        float yRatio = (float) screenHeight / (float) imageHeight;
         float ratio = (xRatio < yRatio) ? xRatio : yRatio;
 
         // scale down the image in order to transfer it to ImageDisplayActivity using Intent
@@ -141,24 +141,51 @@ public class ImageProcessing {
 
         if (ratio >= 1) return original;
 
-        int newWidth = (int)(ratio * imageWidth);
-        int newHeight = (int)(ratio * imageHeight);
+        int newWidth = (int) (ratio * imageWidth);
+        int newHeight = (int) (ratio * imageHeight);
 
         return Bitmap.createScaledBitmap(original, newWidth, newHeight, true);
     }
 
     @NonNull
+    private Mat BGRToGray(byte[] image) {
+        Mat BGRImage = Imgcodecs.imdecode(new MatOfByte(image), Imgcodecs.CV_LOAD_IMAGE_UNCHANGED);
+        Mat res = emptyMat(BGRImage.cols(), BGRImage.rows());
+        Imgproc.cvtColor(BGRImage, res, Imgproc.COLOR_BGR2GRAY, 4);
+        return res;
+    }
+
+    @NonNull
+    private Bitmap toBitmap(Mat image, Mat rgbaMat) {
+        Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.RGB_565);
+        Utils.matToBitmap(image, bmp);
+        return bmp;
+    }
+
+    @NonNull
+    private Mat grayToRGBA(Mat image) {
+        Mat rgbaMat = new Mat(image.width(), image.height(), CvType.CV_8U, new Scalar(4));
+        Imgproc.cvtColor(image, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
+        return rgbaMat;
+    }
+
+    @NonNull
     private Mat emptyMat(int width, int height) {
-        return new Mat(width, height, CvType.CV_8U, new Scalar(2));
+        return emptyMat(width, height, 1);
+    }
+
+    @NonNull
+    private Mat emptyMat(int width, int height, int dimension) {
+        return new Mat(width, height, CvType.CV_8U, new Scalar(dimension));
     }
 
     /**
      * OpenCV only supports landscape pictures, so we gotta rotate 90 degrees.
      */
-    protected Mat rotateImage(Mat imageMat) {
-        Mat result = emptyMat(imageMat.rows(), imageMat.cols());
+    private Mat rotateImage(Mat image) {
+        Mat result = emptyMat(image.rows(), image.cols());
 
-        Core.transpose(imageMat, result);
+        Core.transpose(image, result);
         Core.flip(result, result, 1);
 
         return result;

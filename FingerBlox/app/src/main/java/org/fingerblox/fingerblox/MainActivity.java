@@ -72,10 +72,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     Point size = new Point();
                     display.getSize(size);
                     ImageProcessing p = new ImageProcessing(data);
-                    Bitmap bmp = p.getProcessedImage(size.x, size.y);
+                    ImageSingleton.image = p.getProcessedImage(size.x, size.y);
                     progress.dismiss();
+
                     Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
-                    intent.putExtra("CAPTURED_IMAGE", bmp);
                     startActivity(intent);
                 }
             };
