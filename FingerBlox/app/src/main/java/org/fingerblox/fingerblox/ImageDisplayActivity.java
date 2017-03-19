@@ -15,7 +15,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public static final String TAG = "ImageDisplayActivity";
 
     private ImageView mImageView;
-    private Mat image;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

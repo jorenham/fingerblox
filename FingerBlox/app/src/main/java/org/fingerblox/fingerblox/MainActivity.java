@@ -68,13 +68,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             Thread mThread = new Thread() {
                 @Override
                 public void run() {
-                    Display display = getWindowManager().getDefaultDisplay();
-                    Point size = new Point();
-                    display.getSize(size);
                     ImageProcessing p = new ImageProcessing(data);
+                    ImageSingleton.image = p.getProcessedImage();
                     progress.dismiss();
-
-                    ImageSingleton.image = p.getProcessedImage(size.x, size.y);
 
                     Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
                     startActivity(intent);
