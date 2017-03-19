@@ -34,7 +34,7 @@ public class ImageProcessing {
      * get fingerprint skeleton image. Large part of this code is copied from
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
-    public Bitmap getProcessedImage(int screenWidth, int screenHeight) {
+    public Bitmap getProcessedImage() {
         // Scale down the image for performance
         float scaleDownFactor = 0.5f;
         Bitmap tmp = BitmapFactory.decodeByteArray(data, 0, data.length);
@@ -116,7 +116,7 @@ public class ImageProcessing {
         Utils.matToBitmap(rgbaMat, bmp);
 
         // Return scaled down bitmap
-        return getResizedBitmap(bmp, screenWidth, screenHeight);
+        return bmp;
     }
 
     private Mat cropFingerprint(Mat src) {
