@@ -35,6 +35,7 @@ public class ImageProcessing {
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
     public Bitmap getProcessedImage() {
+//        // Skin detection testing code
 //        float scaleDownFactor = 0.5f;
 //        Bitmap tmp = BitmapFactory.decodeByteArray(data, 0, data.length);
 //        tmp = Bitmap.createScaledBitmap(tmp,
@@ -46,12 +47,12 @@ public class ImageProcessing {
 //
 //        Mat skin = skinDetection(BGRImage);
 //
-//        Mat res = new Mat(skin.cols(), skin.rows(), CvType.CV_8SC4);
+//        Mat res = new Mat(skin.cols(), skin.rows(), CvType.CV_8UC3);
 //        Core.transpose(skin, res);
 //        Core.flip(res, res, 1);
 //
-//        Bitmap bmp = Bitmap.createBitmap(res.rows(), res.cols(), Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(skin, bmp);
+//        Bitmap bmp = Bitmap.createBitmap(res.cols(), res.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(res, bmp);
 //        return bmp;
 
         Mat image = BGRToGray(data);
@@ -87,7 +88,7 @@ public class ImageProcessing {
 
         // Convert to HSV
         Mat hsvFrame = new Mat(src.rows(), src.cols(), CvType.CV_8U, new Scalar(3));
-        Imgproc.cvtColor(src, hsvFrame, Imgproc.COLOR_BGR2HSV, 3);
+        Imgproc.cvtColor(src, hsvFrame, Imgproc.COLOR_RGB2HSV, 3);
 
         // Mask the image for skin colors
         Mat skinMask = new Mat(hsvFrame.rows(), hsvFrame.cols(), CvType.CV_8U, new Scalar(3));
@@ -110,8 +111,6 @@ public class ImageProcessing {
         Mat skin = new Mat(skinMask.rows(), skinMask.cols(), CvType.CV_8U, new Scalar(3));
         Imgproc.GaussianBlur(skinMask, skinMask, ksize, 0);
         Core.bitwise_and(src, src, skin, skinMask);
-
-        Log.i(TAG, String.format("skin type: %s", CvType.typeToString(skin.type())));
 
         return skin;
     }
