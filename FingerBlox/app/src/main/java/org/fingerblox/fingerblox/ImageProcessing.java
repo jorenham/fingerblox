@@ -4,7 +4,6 @@ package org.fingerblox.fingerblox;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -80,7 +79,7 @@ public class ImageProcessing {
         return mat2Bitmap(skeleton);
     }
 
-    private Mat skinDetection(Mat src) {
+    public static Mat skinDetection(Mat src) {
         // define the upper and lower boundaries of the HSV pixel
         // intensities to be considered 'skin'
         Scalar lower = new Scalar(0, 48, 80);

@@ -133,10 +133,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public void onCameraViewStopped() {
     }
 
-    /**
-     * real-time skin detection.
-     * Based on http://www.pyimagesearch.com/2014/08/18/skin-detection-step-step-example-using-python-opencv/
-     */
     public Mat onCameraFrame(Mat inputFrame) {
         return inputFrame;
     }
