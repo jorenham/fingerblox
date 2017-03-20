@@ -4,15 +4,12 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Point;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Display;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
@@ -136,6 +133,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public void onCameraViewStopped() {
     }
 
+    /**
+     * real-time skin detection.
+     * Based on http://www.pyimagesearch.com/2014/08/18/skin-detection-step-step-example-using-python-opencv/
+     */
     public Mat onCameraFrame(Mat inputFrame) {
         return inputFrame;
     }
