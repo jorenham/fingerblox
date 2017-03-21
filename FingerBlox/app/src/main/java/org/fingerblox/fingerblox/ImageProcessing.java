@@ -3,27 +3,27 @@ package org.fingerblox.fingerblox;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Camera;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.Point;
 import org.opencv.core.Range;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
 public class ImageProcessing {
+    public static final String TAG = "ImageProcessing";
+
     private byte[] data;
 
     public ImageProcessing(byte[] data) {
@@ -58,6 +58,41 @@ public class ImageProcessing {
         }
 
         return mat2Bitmap(skeleton);
+    }
+
+    public static Mat skinDetection(Mat src) {
+        // define the upper and lower boundaries of the HSV pixel
+        // intensities to be considered 'skin'
+        Scalar lower = new Scalar(0, 48, 80);
+        Scalar upper = new Scalar(20, 255, 255);
+
+        // Convert to HSV
+        Mat hsvFrame = new Mat(src.rows(), src.cols(), CvType.CV_8U, new Scalar(3));
+        Imgproc.cvtColor(src, hsvFrame, Imgproc.COLOR_RGB2HSV, 3);
+
+        // Mask the image for skin colors
+        Mat skinMask = new Mat(hsvFrame.rows(), hsvFrame.cols(), CvType.CV_8U, new Scalar(3));
+        Core.inRange(hsvFrame, lower, upper, skinMask);
+
+        // apply a series of erosions and dilations to the mask
+        // using an elliptical kernel
+        final Size kernelSize = new Size(11, 11);
+        final Point anchor = new Point(-1, -1);
+        final int iterations = 2;
+
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, kernelSize);
+        Imgproc.erode(skinMask, skinMask, kernel, anchor, iterations);
+        Imgproc.dilate(skinMask, skinMask, kernel, anchor, iterations);
+
+        // blur the mask to help remove noise, then apply the
+        // mask to the frame
+        final Size ksize = new Size(3, 3);
+
+        Mat skin = new Mat(skinMask.rows(), skinMask.cols(), CvType.CV_8U, new Scalar(3));
+        Imgproc.GaussianBlur(skinMask, skinMask, ksize, 0);
+        Core.bitwise_and(src, src, skin, skinMask);
+
+        return skin;
     }
 
     private Mat getSkeletonImage(Mat src, int rows, int cols) {
@@ -131,6 +166,7 @@ public class ImageProcessing {
         Utils.bitmapToMat(tmp, BGRImage);
         Mat res = emptyMat(BGRImage.cols(), BGRImage.rows());
         Imgproc.cvtColor(BGRImage, res, Imgproc.COLOR_BGR2GRAY, 4);
+
         return res;
     }
 
