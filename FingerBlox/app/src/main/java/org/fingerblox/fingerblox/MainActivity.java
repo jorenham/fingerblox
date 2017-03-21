@@ -109,6 +109,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 mOpenCvCameraView.takePicture();
             }
         });
+        Button fixedFocusButton = (Button) findViewById(R.id.btn_fixfocus);
+        assert fixedFocusButton != null;
+        fixedFocusButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mOpenCvCameraView.fixFocus();
+            }
+        });
     }
 
     @Override

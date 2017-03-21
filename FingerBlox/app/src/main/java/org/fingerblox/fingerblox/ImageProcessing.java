@@ -53,9 +53,9 @@ public class ImageProcessing {
         Mat skeleton = getSkeletonImage(floated, rows, cols);
 
         // Rotate the image back to original orientation
-        for(int i=0; i<3; i++) {
-            skeleton = rotateImage(skeleton);
-        }
+        //for(int i=0; i<4; i++) {
+        //    skeleton = rotateImage(skeleton);
+        //}
 
         return mat2Bitmap(skeleton);
     }

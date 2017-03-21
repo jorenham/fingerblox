@@ -57,7 +57,7 @@ public class CameraView extends JavaCameraView implements PictureCallback {
 
     protected void setFixedFocusDistance() {
 
-        float padding = CameraOverlayView.PADDING + 0.1f;
+        float padding = 0.4f;
         Rect focusRect = new Rect(
                 Math.round(-(0.5f * width) + (padding * width)),
                 Math.round(-(0.5f * height) + (padding * height)),
@@ -71,6 +71,17 @@ public class CameraView extends JavaCameraView implements PictureCallback {
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         parameters.setFocusAreas(focusAreaList);
+        parameters.setPictureSize(720, 480);
+        mCamera.setParameters(parameters);
+    }
+
+    protected void fixFocus() {
+        Camera.Parameters parameters = mCamera.getParameters();
+        if (parameters.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_MACRO)) {
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        } else {
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+        }
         mCamera.setParameters(parameters);
     }
 }
