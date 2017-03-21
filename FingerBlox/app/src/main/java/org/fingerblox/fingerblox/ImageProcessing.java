@@ -4,6 +4,7 @@ package org.fingerblox.fingerblox;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -34,26 +35,6 @@ public class ImageProcessing {
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
     public Bitmap getProcessedImage() {
-//        // Skin detection testing code
-//        float scaleDownFactor = 0.5f;
-//        Bitmap tmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-//        tmp = Bitmap.createScaledBitmap(tmp,
-//                (int)(tmp.getWidth()*scaleDownFactor),
-//                (int)(tmp.getHeight()*scaleDownFactor),
-//                true);
-//        Mat BGRImage = new Mat(tmp.getWidth(), tmp.getHeight(), CvType.CV_8UC3);
-//        Utils.bitmapToMat(tmp, BGRImage);
-//
-//        Mat skin = skinDetection(BGRImage);
-//
-//        Mat res = new Mat(skin.cols(), skin.rows(), CvType.CV_8UC3);
-//        Core.transpose(skin, res);
-//        Core.flip(res, res, 1);
-//
-//        Bitmap bmp = Bitmap.createBitmap(res.cols(), res.rows(), Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(res, bmp);
-//        return bmp;
-
         Mat image = BGRToGray(data);
         image = rotateImage(image);
         image = cropFingerprint(image);
@@ -185,6 +166,7 @@ public class ImageProcessing {
         Utils.bitmapToMat(tmp, BGRImage);
         Mat res = emptyMat(BGRImage.cols(), BGRImage.rows());
         Imgproc.cvtColor(BGRImage, res, Imgproc.COLOR_BGR2GRAY, 4);
+
         return res;
     }
 
