@@ -109,13 +109,16 @@ public class ImageProcessing {
     }
 
     private Mat cropFingerprint(Mat src) {
-        int rowStart = (int) (CameraOverlayView.PADDING * src.rows());
-        int rowEnd = (int) ((1 - CameraOverlayView.PADDING) * src.rows());
-        int colStart = (int) (CameraOverlayView.PADDING * src.cols());
-        int colEnd = (int) ((1 - CameraOverlayView.PADDING) * src.cols());
-        Range rowRange = new Range(rowStart, rowEnd);
-        Range colRange = new Range(colStart, colEnd);
-        return src.submat(rowRange, colRange);
+//        System.out.println("Mat src: " + src.toString());
+        System.out.println("Height, Width: " + src.height() + " " + src.width());
+//        int rowStart = (int) (CameraOverlayView.PADDING * src.rows());
+//        int rowEnd = (int) ((1 - CameraOverlayView.PADDING) * src.rows());
+//        int colStart = (int) (CameraOverlayView.PADDING * src.cols());
+//        int colEnd = (int) ((1 - CameraOverlayView.PADDING) * src.cols());
+//        Range rowRange = new Range(rowStart, rowEnd);
+//        Range colRange = new Range(colStart, colEnd);
+//        return src.submat(rowRange, colRange);
+        return src;
     }
 
     @NonNull
