@@ -52,11 +52,6 @@ public class ImageProcessing {
 
         Mat skeleton = getSkeletonImage(floated, rows, cols);
 
-        // Rotate the image back to original orientation
-        //for(int i=0; i<4; i++) {
-        //    skeleton = rotateImage(skeleton);
-        //}
-
         return mat2Bitmap(skeleton);
     }
 
@@ -109,16 +104,13 @@ public class ImageProcessing {
     }
 
     private Mat cropFingerprint(Mat src) {
-//        System.out.println("Mat src: " + src.toString());
-        System.out.println("Height, Width: " + src.height() + " " + src.width());
-//        int rowStart = (int) (CameraOverlayView.PADDING * src.rows());
-//        int rowEnd = (int) ((1 - CameraOverlayView.PADDING) * src.rows());
-//        int colStart = (int) (CameraOverlayView.PADDING * src.cols());
-//        int colEnd = (int) ((1 - CameraOverlayView.PADDING) * src.cols());
-//        Range rowRange = new Range(rowStart, rowEnd);
-//        Range colRange = new Range(colStart, colEnd);
-//        return src.submat(rowRange, colRange);
-        return src;
+        int rowStart = (int) (CameraOverlayView.PADDING * src.rows());
+        int rowEnd = (int) ((1 - CameraOverlayView.PADDING) * src.rows());
+        int colStart = (int) (CameraOverlayView.PADDING * src.cols());
+        int colEnd = (int) ((1 - CameraOverlayView.PADDING) * src.cols());
+        Range rowRange = new Range(rowStart, rowEnd);
+        Range colRange = new Range(colStart, colEnd);
+        return src.submat(rowRange, colRange);
     }
 
     @NonNull

@@ -71,14 +71,27 @@ public class CameraView extends JavaCameraView implements PictureCallback {
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         parameters.setFocusAreas(focusAreaList);
-        parameters.setPictureSize(720, 480);
+        System.out.println("DEBUG Picture Sizes: " + parameters.getSupportedPictureSizes().toString());
+        Camera.Size max_size = null;
+        for (Camera.Size size : parameters.getSupportedPictureSizes()) {
+            if (max_size == null || (size.height > max_size.height && size.width >= max_size.height)) {
+                max_size = size;
+            }
+        }
+        assert max_size != null;
+        parameters.setPictureSize(max_size.width, max_size.height);
         mCamera.setParameters(parameters);
     }
 
-    protected void fixFocus() {
+    protected void fixFocusToggle() {
         Camera.Parameters parameters = mCamera.getParameters();
-        if (parameters.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_MACRO)) {
+        // parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+        if (parameters.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_MACRO) ||
+                parameters.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_FIXED)) {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        } else if (!parameters.getSupportedFocusModes().contains(
+                Camera.Parameters.FOCUS_MODE_MACRO)) {
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
         } else {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
         }
