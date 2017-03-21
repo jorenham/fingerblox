@@ -71,10 +71,11 @@ public class CameraView extends JavaCameraView implements PictureCallback {
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         parameters.setFocusAreas(focusAreaList);
-        System.out.println("DEBUG Picture Sizes: " + parameters.getSupportedPictureSizes().toString());
+
         Camera.Size max_size = null;
         for (Camera.Size size : parameters.getSupportedPictureSizes()) {
-            if (max_size == null || (size.height > max_size.height && size.width >= max_size.height)) {
+            if (max_size == null || (size.height >= max_size.height &&
+                    size.width >= max_size.height && size.height <= 1024)) {
                 max_size = size;
             }
         }
@@ -86,14 +87,16 @@ public class CameraView extends JavaCameraView implements PictureCallback {
     protected void fixFocusToggle() {
         Camera.Parameters parameters = mCamera.getParameters();
         // parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-        if (parameters.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_MACRO) ||
-                parameters.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_FIXED)) {
+        if (!parameters.getFocusMode().equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-        } else if (!parameters.getSupportedFocusModes().contains(
+        } else if (parameters.getSupportedFocusModes().contains(
                 Camera.Parameters.FOCUS_MODE_MACRO)) {
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+        } else if (parameters.getSupportedFocusModes().contains(
+                Camera.Parameters.FOCUS_MODE_FIXED)) {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_FIXED);
         } else {
-            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         }
         mCamera.setParameters(parameters);
     }
