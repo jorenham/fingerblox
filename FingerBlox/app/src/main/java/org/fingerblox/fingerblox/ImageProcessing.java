@@ -50,6 +50,7 @@ public class ImageProcessing {
         Mat floated = new Mat(rows, cols, CvType.CV_32FC1);
         equalized.convertTo(floated, CvType.CV_32FC1);
 
+        System.out.println("BLOX1");
         Mat skeleton = getSkeletonImage(floated, rows, cols);
         return mat2Bitmap(skeleton);
     }
@@ -646,6 +647,7 @@ public class ImageProcessing {
      * @param blockSize
      */
     private void enhancement(Mat source, Mat result, int blockSize, int rows, int cols, int padding) {
+        System.out.println("BLOX1: " + rows + " " + cols + " " + padding);
         Mat MatSnapShotMask = snapShotMask(rows, cols, padding);
 
         Mat paddedMask = imagePadding(MatSnapShotMask, blockSize);
