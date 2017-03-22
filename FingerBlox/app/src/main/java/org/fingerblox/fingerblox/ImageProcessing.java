@@ -53,9 +53,11 @@ public class ImageProcessing {
         Mat skeleton = getSkeletonImage(floated, rows, cols);
 
         // Rotate the image back to original orientation
+        /*
         for(int i=0; i<3; i++) {
             skeleton = rotateImage(skeleton);
         }
+        */
 
         return mat2Bitmap(skeleton);
     }
@@ -126,11 +128,11 @@ public class ImageProcessing {
         // step 4: get ridge filter
         Mat matRidgeFilter = new Mat(imgRows, imgCols, CvType.CV_32FC1);
         double filterSize = 1.9;
-        ridgeFilter(matRidgeSegment, matRidgeOrientation, matFrequency, matRidgeFilter, filterSize, filterSize, medianFreq);
+        int padding = ridgeFilter(matRidgeSegment, matRidgeOrientation, matFrequency, matRidgeFilter, filterSize, filterSize, medianFreq);
 
         // step 5: enhance image after ridge filter
         Mat matEnhanced = new Mat(imgRows, imgCols, CvType.CV_8UC1);
-        enhancement(matRidgeFilter, matEnhanced, blockSize, rows, cols);
+        enhancement(matRidgeFilter, matEnhanced, blockSize, rows, cols, padding);
 
         return matEnhanced;
     }
@@ -546,7 +548,7 @@ public class ImageProcessing {
      * @param medianFreq
      * @return
      */
-    private void ridgeFilter(Mat ridgeSegment, Mat orientation, Mat frequency, Mat result, double kx, double ky, double medianFreq) {
+    private int ridgeFilter(Mat ridgeSegment, Mat orientation, Mat frequency, Mat result, double kx, double ky, double medianFreq) {
 
         int angleInc = 3;
         int rows = ridgeSegment.rows();
@@ -639,6 +641,8 @@ public class ImageProcessing {
                 }
             }
         }
+
+        return size;
     }
 
     /**
@@ -649,8 +653,8 @@ public class ImageProcessing {
      * @param result
      * @param blockSize
      */
-    private void enhancement(Mat source, Mat result, int blockSize, int rows, int cols) {
-        Mat MatSnapShotMask = snapShotMask(rows, cols, 10);
+    private void enhancement(Mat source, Mat result, int blockSize, int rows, int cols, int padding) {
+        Mat MatSnapShotMask = snapShotMask(rows, cols, padding);
 
         Mat paddedMask = imagePadding(MatSnapShotMask, blockSize);
 
@@ -757,12 +761,15 @@ public class ImageProcessing {
      *
      * @return
      */
-    private Mat snapShotMask(int rows, int cols, int offset) {
+    private Mat snapShotMask(int rows, int cols, int padding) {
+        /*
+        Some magic numbers. We have no idea where these come from?!
         int maskWidth = 260;
         int maskHeight = 160;
+        */
 
         Point center = new Point(cols / 2, rows / 2);
-        Size axes = new Size(maskWidth - offset, maskHeight - offset);
+        Size axes = new Size(cols/2 - padding, rows/2 - padding);
         Scalar scalarWhite = new Scalar(255, 255, 255);
         Scalar scalarBlack = new Scalar(0, 0, 0);
         int thickness = -1;

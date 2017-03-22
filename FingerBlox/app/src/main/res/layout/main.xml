@@ -13,9 +13,8 @@
         opencv:show_fps="true"
         opencv:camera_id="any" />
     <org.fingerblox.fingerblox.CameraOverlayView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/btn_takepicture"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
         android:layout_alignParentTop="true" />
     <Button
         android:id="@+id/btn_takepicture"
