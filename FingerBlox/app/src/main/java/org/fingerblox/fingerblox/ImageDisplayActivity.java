@@ -20,7 +20,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setTitle("Fingerprint skeleton");
+        setTitle("Zebra");
         setContentView(R.layout.activity_image_display);
         mImageView = (ImageView) findViewById(R.id.image_view);
 
