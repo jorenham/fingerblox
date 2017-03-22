@@ -9,7 +9,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 public class CameraOverlayView extends View {
-    public final static float PADDING = 0.35f;
+    public final static float PADDING = 0.25f;
 
     private Paint borderPaint = new Paint();
     private Paint innerPaint = new Paint();

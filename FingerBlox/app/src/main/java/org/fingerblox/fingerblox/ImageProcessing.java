@@ -51,14 +51,6 @@ public class ImageProcessing {
         equalized.convertTo(floated, CvType.CV_32FC1);
 
         Mat skeleton = getSkeletonImage(floated, rows, cols);
-
-        // Rotate the image back to original orientation
-        /*
-        for(int i=0; i<3; i++) {
-            skeleton = rotateImage(skeleton);
-        }
-        */
-
         return mat2Bitmap(skeleton);
     }
 
