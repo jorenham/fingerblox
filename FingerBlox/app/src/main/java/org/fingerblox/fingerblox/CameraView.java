@@ -57,13 +57,14 @@ public class CameraView extends JavaCameraView implements PictureCallback {
 
     protected void setFixedFocusDistance() {
 
-        float padding = 0.4f;
+        float padding = 0.2f;
         Rect focusRect = new Rect(
                 Math.round(-(0.5f * width) + (padding * width)),
                 Math.round(-(0.5f * height) + (padding * height)),
                 Math.round((0.5f * width) - (padding * width)),
                 Math.round((0.5f * height) - (padding * height))
         );
+        Log.i(TAG, focusRect.toString());
 
         Camera.Area focusArea = new Camera.Area(focusRect, 1000);
         ArrayList<Camera.Area> focusAreaList = new ArrayList<>(Collections.singletonList(focusArea));
@@ -73,14 +74,15 @@ public class CameraView extends JavaCameraView implements PictureCallback {
         parameters.setFocusAreas(focusAreaList);
 
         Camera.Size max_size = null;
-        for (Camera.Size size : parameters.getSupportedPictureSizes()) {
+        for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
             if (max_size == null || (size.height >= max_size.height &&
-                    size.width >= max_size.height && size.height <= 1024)) {
+                    size.width >= max_size.width && size.height <= 1024)) {
                 max_size = size;
             }
         }
         assert max_size != null;
         parameters.setPictureSize(max_size.width, max_size.height);
+//        parameters.setPreviewSize(max_size.width, max_size.height);
         mCamera.setParameters(parameters);
     }
 

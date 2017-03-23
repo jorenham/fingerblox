@@ -9,13 +9,18 @@ import android.util.Log;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
+import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Range;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
@@ -51,7 +56,33 @@ public class ImageProcessing {
         equalized.convertTo(floated, CvType.CV_32FC1);
 
         Mat skeleton = getSkeletonImage(floated, rows, cols);
-        return mat2Bitmap(skeleton);
+
+        Mat skeleton_with_keypoints = detectFeatures(skeleton);
+
+        return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
+    }
+
+    @NonNull
+    private Mat detectFeatures(Mat skeleton) {
+        FeatureDetector star = FeatureDetector.create(FeatureDetector.ORB);
+        DescriptorExtractor brief = DescriptorExtractor.create(DescriptorExtractor.ORB);
+
+        MatOfKeyPoint keypoints = new MatOfKeyPoint();
+        star.detect(skeleton, keypoints);
+
+        KeyPoint[] keypointArray = keypoints.toArray();
+        for (KeyPoint k : keypointArray) {
+            k.size /= 8;
+        }
+        keypoints.fromArray(keypointArray);
+
+        Mat descriptors = new Mat();
+        brief.compute(skeleton, keypoints, descriptors);
+
+        Mat results = new Mat();
+        Scalar color = new Scalar(255, 0, 0); // RGB
+        Features2d.drawKeypoints(skeleton, keypoints, results, color, Features2d.DRAW_RICH_KEYPOINTS);
+        return results;
     }
 
     public static Mat skinDetection(Mat src) {
@@ -132,6 +163,14 @@ public class ImageProcessing {
     private Bitmap mat2Bitmap(Mat src) {
         Mat rgbaMat = new Mat(src.width(), src.height(), CvType.CV_8U, new Scalar(4));
         Imgproc.cvtColor(src, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
+        Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(rgbaMat, bmp);
+        return bmp;
+    }
+
+    private Bitmap mat2Bitmap(Mat src, int code) {
+        Mat rgbaMat = new Mat(src.width(), src.height(), CvType.CV_8U, new Scalar(4));
+        Imgproc.cvtColor(src, rgbaMat, code, 4);
         Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(rgbaMat, bmp);
         return bmp;
@@ -646,6 +685,7 @@ public class ImageProcessing {
      * @param blockSize
      */
     private void enhancement(Mat source, Mat result, int blockSize, int rows, int cols, int padding) {
+        System.out.println("BLOX1: " + rows + " " + cols + " " + padding);
         Mat MatSnapShotMask = snapShotMask(rows, cols, padding);
 
         Mat paddedMask = imagePadding(MatSnapShotMask, blockSize);
