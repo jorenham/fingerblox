@@ -24,16 +24,20 @@ import org.opencv.core.Mat;
 
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener {
     public static final String TAG = "MainActivity";
+    public static final String OPENCV = "OpenCV Initialization";
 
     private CameraView mOpenCvCameraView;
 
     static {
         if(!OpenCVLoader.initDebug()) {
-            Log.e(TAG, "Failed to load OpenCV");
+            Log.e(OPENCV, "Failed to load OpenCV");
+        }else {
+            Log.e(OPENCV, "Connected Successfully");
         }
     }
 
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+    //
+    private BaseLoaderCallback mOpenCVCallBack = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
             switch (status) {
@@ -44,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 } break;
                 default:
                 {
-                    super.onManagerConnected(status);
+                    //super.onManagerConnected(status);
                 } break;
             }
         }
@@ -93,9 +97,12 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.main);
 
+
+
         mOpenCvCameraView = (CameraView) findViewById(R.id.camera_preview);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
+        mOpenCVCallBack.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         mOpenCvCameraView.setPictureListener(pictureCallback);
 
         Button takePictureButton = (Button) findViewById(R.id.btn_takepicture);
@@ -114,12 +121,20 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 mOpenCvCameraView.fixFocusToggle();
             }
         });
+
+
+//        Log.i(TAG, "Trying to load OpenCV library");
+//        if (!OpenCVLoader.initDebug()) {
+//            Log.e(TAG, "Cannot connect to OpenCV Manager");
+//        } else {
+//            mOpenCVCallBack.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+//        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mLoaderCallback);
+       // OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mOpenCVCallBack);
     }
 
     @Override
