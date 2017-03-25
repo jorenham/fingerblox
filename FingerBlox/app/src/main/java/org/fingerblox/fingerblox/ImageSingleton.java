@@ -2,8 +2,8 @@ package org.fingerblox.fingerblox;
 
 import android.graphics.Bitmap;
 
-public class ImageSingleton {
-    public static Bitmap image;
+class ImageSingleton {
+    static Bitmap image;
 
     private ImageSingleton() {}
 }

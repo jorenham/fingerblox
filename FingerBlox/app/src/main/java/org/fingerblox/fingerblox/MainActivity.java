@@ -24,6 +24,12 @@ import org.opencv.core.Mat;
 
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener {
     public static final String TAG = "MainActivity";
+    public static final String BASE64_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAi" +
+            "LquHhsRG2KdlJjawS67302BNXTpkSRe3WGWO8yzacuS/d/2Y7j7u9/u+kflAh5t+3dhc/KoX1ONS/9drFSfU" +
+            "1zg/AKiTOpVpuLzNttqdDJfvUX7dKn9uw7CQN9jEzRSKdRaDlX/w9BOmOpfO8XJ9pEXR2t62W6Lt/xfujxja" +
+            "+uqUjIQ08RmKMtrTxcvmc26nz3VXqxtkMloCGMzhojDhEFHS9DPuZ3TePp2g21XMKS4kmi414U8N86hW6DIQ" +
+            "wlJnWgCWP75lRImqP8G+NvWrvBclQfPcRL8Mj3O22s5UbD5NUVaxdG/xHb9DQXvSpXI3fDrnaxwaf8Mv+Sbw" +
+            "ZsD+QIDAQAB";
 
     private CameraView mOpenCvCameraView;
 
@@ -39,7 +45,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS:
                 {
-                    Log.i(TAG, "OpenCV loaded successfully");
                     mOpenCvCameraView.enableView();
                 } break;
                 default:
@@ -52,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private PictureCallback pictureCallback = new PictureCallback() {
         public void onPictureTaken(final byte[] data, Camera camera) {
-            Log.i(TAG, String.format("Picture taken of %d bytes", data.length));
             camera.startPreview();
             camera.setPreviewCallback(mOpenCvCameraView);
 
@@ -81,7 +85,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String s = "CAMERA";
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
             if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -119,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     @Override
     public void onResume() {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mLoaderCallback);
+        mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
     }
 
     @Override

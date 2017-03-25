@@ -4,7 +4,6 @@ package org.fingerblox.fingerblox;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -26,12 +25,12 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class ImageProcessing {
+class ImageProcessing {
     public static final String TAG = "ImageProcessing";
 
     private byte[] data;
 
-    public ImageProcessing(byte[] data) {
+    ImageProcessing(byte[] data) {
         this.data = data;
     }
 
@@ -39,7 +38,7 @@ public class ImageProcessing {
      * get fingerprint skeleton image. Large part of this code is copied from
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
-    public Bitmap getProcessedImage() {
+    Bitmap getProcessedImage() {
         Mat image = BGRToGray(data);
         image = rotateImage(image);
         image = cropFingerprint(image);
@@ -229,10 +228,6 @@ public class ImageProcessing {
 
     /**
      * Apply padding to the image.
-     *
-     * @param source
-     * @param blockSize
-     * @return
      */
     private Mat imagePadding(Mat source, int blockSize) {
 
@@ -254,10 +249,6 @@ public class ImageProcessing {
 
     /**
      * calculate ridge segment by doing block process for the given image using the given block size.
-     *
-     * @param source
-     * @param blockSize
-     * @return
      */
     private void ridgeSegment(Mat source, Mat result, Mat mask, int blockSize, double threshold) {
 
@@ -303,12 +294,6 @@ public class ImageProcessing {
 
     /**
      * Calculate ridge orientation.
-     *
-     * @param ridgeSegment
-     * @param result
-     * @param gradientSigma
-     * @param blockSigma
-     * @param orientSmoothSigma
      */
     private void ridgeOrientation(Mat ridgeSegment, Mat result, int gradientSigma, int blockSigma, int orientSmoothSigma) {
 
@@ -395,8 +380,6 @@ public class ImageProcessing {
 
     /**
      * Create Gaussian kernel.
-     *
-     * @param sigma
      */
     private Mat gaussianKernel(int kSize, int sigma) {
 
@@ -410,10 +393,6 @@ public class ImageProcessing {
 
     /**
      * Calculate bitwise atan2 for the given 2 images.
-     *
-     * @param src1
-     * @param src2
-     * @param dst
      */
     private void atan2(Mat src1, Mat src2, Mat dst) {
 
@@ -429,16 +408,6 @@ public class ImageProcessing {
 
     /**
      * Calculate ridge frequency.
-     *
-     * @param ridgeSegment
-     * @param segmentMask
-     * @param ridgeOrientation
-     * @param frequencies
-     * @param blockSize
-     * @param windowSize
-     * @param minWaveLength
-     * @param maxWaveLength
-     * @return
      */
     private double ridgeFrequency(Mat ridgeSegment, Mat segmentMask, Mat ridgeOrientation, Mat frequencies, int blockSize, int windowSize, int minWaveLength, int maxWaveLength) {
 
@@ -472,13 +441,6 @@ public class ImageProcessing {
 
     /**
      * Estimate fingerprint ridge frequency within image block.
-     *
-     * @param block
-     * @param blockOrientation
-     * @param windowSize
-     * @param minWaveLength
-     * @param maxWaveLength
-     * @return
      */
     private Mat calculateFrequency(Mat block, Mat blockOrientation, int windowSize, int minWaveLength, int maxWaveLength) {
 
@@ -516,7 +478,7 @@ public class ImageProcessing {
         Mat cropped = rotated.submat(offset, offset + cropSize, offset, offset + cropSize);
 
         // get sums of columns
-        float sum = 0;
+        float sum;
         Mat proj = new Mat(1, cropped.cols(), CvType.CV_32FC1);
         for (int c = 1; c < cropped.cols(); c++) {
             sum = 0;
@@ -537,7 +499,7 @@ public class ImageProcessing {
         double projValue;
         double dilateValue;
         final double ROUND_POINTS = 1000;
-        ArrayList<Integer> maxind = new ArrayList<Integer>();
+        ArrayList<Integer> maxind = new ArrayList<>();
         for (int i = 0; i < cropped.cols(); i++) {
 
             projValue = proj.get(0, i)[0];
@@ -569,15 +531,6 @@ public class ImageProcessing {
 
     /**
      * Enhance fingerprint image using oriented filters.
-     *
-     * @param ridgeSegment
-     * @param orientation
-     * @param frequency
-     * @param result
-     * @param kx
-     * @param ky
-     * @param medianFreq
-     * @return
      */
     private int ridgeFilter(Mat ridgeSegment, Mat orientation, Mat frequency, Mat result, double kx, double ky, double medianFreq) {
 
@@ -679,10 +632,6 @@ public class ImageProcessing {
     /**
      * Enhance the image after ridge filter.
      * Apply mask, binary threshold, thinning, ..., etc.
-     *
-     * @param source
-     * @param result
-     * @param blockSize
      */
     private void enhancement(Mat source, Mat result, int blockSize, int rows, int cols, int padding) {
         System.out.println("BLOX1: " + rows + " " + cols + " " + padding);
@@ -699,9 +648,6 @@ public class ImageProcessing {
 
     /**
      * Create mesh grid.
-     *
-     * @param size
-     * @return
      */
     private Mat meshGrid(int size) {
 
@@ -720,9 +666,6 @@ public class ImageProcessing {
 
     /**
      * Apply cos to each element of the matrix.
-     *
-     * @param source
-     * @return
      */
     private Mat matCos(Mat source) {
 
@@ -741,14 +684,11 @@ public class ImageProcessing {
 
     /**
      * Calculate the median of all values greater than zero.
-     *
-     * @param image
-     * @return
      */
     private double medianFrequency(Mat image) {
 
-        ArrayList<Double> values = new ArrayList<Double>();
-        double value = 0;
+        ArrayList<Double> values = new ArrayList<>();
+        double value;
 
         for (int r = 0; r < image.rows(); r++) {
             for (int c = 0; c < image.cols(); c++) {
@@ -776,22 +716,17 @@ public class ImageProcessing {
 
     /**
      * Calculate mean of given array.
-     *
-     * @param m
-     * @return
      */
     private double calculateMean(double[] m) {
         double sum = 0;
-        for (int i = 0; i < m.length; i++) {
-            sum += m[i];
+        for (double aM : m) {
+            sum += aM;
         }
         return sum / m.length;
     }
 
     /**
      * Mask used in the snapshot.
-     *
-     * @return
      */
     private Mat snapShotMask(int rows, int cols, int padding) {
         /*
@@ -811,6 +746,4 @@ public class ImageProcessing {
         Imgproc.ellipse(mask, center, axes, 0, 0, 360, scalarWhite, thickness, lineType, 0);
         return mask;
     }
-
-    // endregion FingerprintRecognition
 }

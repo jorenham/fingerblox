@@ -3,6 +3,7 @@
     package="org.fingerblox.fingerblox">
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
@@ -30,7 +31,7 @@
             android:name=".ImageDisplayActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_image_display"
-            android:theme="@style/FullscreenTheme"></activity>
+            android:theme="@style/FullscreenTheme" />
     </application>
 
 </manifest>
