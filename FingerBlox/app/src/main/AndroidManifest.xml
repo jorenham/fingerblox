@@ -3,6 +3,7 @@
     package="org.fingerblox.fingerblox">
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="com.android.vending.CHECK_LICENSE" />
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
