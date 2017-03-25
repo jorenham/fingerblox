@@ -16,6 +16,10 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_alignParentTop="true" />
+    <org.fingerblox.fingerblox.ScannerOverlayView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentTop="true" />
 
     <Button
         android:id="@+id/btn_takepicture"
