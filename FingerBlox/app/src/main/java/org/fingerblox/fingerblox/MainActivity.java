@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     @Override
     public void onResume() {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mLoaderCallback);
+        mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
     }
 
     @Override
