@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS:
                 {
-                    Log.i(TAG, "OpenCV loaded successfully");
                     mOpenCvCameraView.enableView();
                 } break;
                 default:
@@ -52,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private PictureCallback pictureCallback = new PictureCallback() {
         public void onPictureTaken(final byte[] data, Camera camera) {
-            Log.i(TAG, String.format("Picture taken of %d bytes", data.length));
             camera.startPreview();
             camera.setPreviewCallback(mOpenCvCameraView);
 
@@ -81,7 +79,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String s = "CAMERA";
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
             if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
