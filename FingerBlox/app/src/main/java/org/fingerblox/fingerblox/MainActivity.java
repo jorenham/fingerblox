@@ -4,24 +4,40 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
+import android.hardware.Camera.PreviewCallback;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Range;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 
+@SuppressWarnings("deprecation")
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener {
     public static final String TAG = "MainActivity";
     public static final String BASE64_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAi" +
@@ -32,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             "ZsD+QIDAQAB";
 
     private CameraView mOpenCvCameraView;
+    private SurfaceView mCameraProcessPreview;
 
     static {
         if(!OpenCVLoader.initDebug()) {
@@ -57,9 +74,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private PictureCallback pictureCallback = new PictureCallback() {
         public void onPictureTaken(final byte[] data, Camera camera) {
-            camera.startPreview();
-            camera.setPreviewCallback(mOpenCvCameraView);
-
             final ProgressDialog progress = new ProgressDialog(MainActivity.this);
             progress.setTitle("Loading");
             progress.setMessage("Processing image...");
@@ -117,6 +131,11 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 mOpenCvCameraView.fixFocusToggle();
             }
         });
+
+        mCameraProcessPreview = (SurfaceView) findViewById(R.id.camera_process_preview);
+        mCameraProcessPreview.setZOrderOnTop(true);
+        mCameraProcessPreview.setZOrderMediaOverlay(true);
+        mCameraProcessPreview.getHolder().setFormat(PixelFormat.TRANSPARENT);
     }
 
     @Override
@@ -145,6 +164,23 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     }
 
     public Mat onCameraFrame(Mat inputFrame) {
+        processFrame(inputFrame);
         return inputFrame;
+    }
+
+    private void processFrame(Mat frame) {
+
+        Canvas canvas = null;
+        SurfaceHolder holder = mCameraProcessPreview.getHolder();
+
+        try {
+            canvas = holder.lockCanvas(null);
+            Bitmap result = ImageProcessing.preprocess(frame, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
+            canvas.drawBitmap(result, 0, 0, new Paint());
+        } finally {
+            if (canvas != null) {
+                holder.unlockCanvasAndPost(canvas);
+            }
+        }
     }
 }

@@ -746,4 +746,52 @@ class ImageProcessing {
         Imgproc.ellipse(mask, center, axes, 0, 0, 360, scalarWhite, thickness, lineType, 0);
         return mask;
     }
+
+    protected static Bitmap preprocess(Mat frame, int width, int height) {
+        // rotate
+        Mat rotatedFrame = new Mat(frame.rows(), frame.cols(), CvType.CV_8UC3);
+        Core.transpose(frame, rotatedFrame);
+        Core.flip(rotatedFrame, rotatedFrame, Core.ROTATE_180);
+
+        // resize to match the surface view
+        Mat resizedFrame = new Mat(width, height, CvType.CV_8UC3);
+        Imgproc.resize(rotatedFrame, resizedFrame, new Size(width, height));
+
+        // convert to greyscale
+        Mat frameGrey = new Mat(resizedFrame.rows(), resizedFrame.cols(), CvType.CV_8UC1);
+        Imgproc.cvtColor(resizedFrame, frameGrey, Imgproc.COLOR_BGR2GRAY, 1);
+
+        // crop
+        int paddingX = (int) CameraOverlayView.PADDING * frameGrey.cols();
+        int paddingY = (int) CameraOverlayView.PADDING * frameGrey.rows();
+        //Rect roi = new Rect(paddingX, paddingY, width - (2 * paddingX), height - (2 * paddingY));
+        Mat ellipse = new Mat(frameGrey.rows(), frameGrey.cols(), frameGrey.type());
+        Imgproc.ellipse(
+                ellipse,
+                new Point(width / 2, height / 2),
+                new Size(width - (2 * paddingX), height - (2 * paddingY)),
+                0, 0, 0,
+                new Scalar(255),
+                -1
+        );
+        Mat frameCropped = new Mat(frameGrey.rows(), frameGrey.rows(), frameGrey.type());
+        Core.bitwise_and(frameGrey, ellipse, frameCropped);
+
+        // histogram equalisation
+        Mat frameHistEq = new Mat(frame.rows(), frameCropped.cols(), frameCropped.type());
+        Imgproc.equalizeHist(frameCropped, frameHistEq);
+
+        // convert back to rgba
+        Mat frameRgba = new Mat(frameHistEq.rows(), frameHistEq.cols(), CvType.CV_8UC4);
+        Imgproc.cvtColor(frameHistEq, frameRgba, Imgproc.COLOR_GRAY2RGBA);
+
+        //Mat cropped = new Mat(width, height, CvType.CV_8UC4, new Scalar(255, 255, 255, 0));
+        //frameCropped.copyTo(cropped);
+
+        // convert to bitmap
+        Bitmap bmp = Bitmap.createBitmap(frameRgba.cols(), frameRgba.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(frameRgba, bmp);
+
+        return bmp;
+    }
 }
