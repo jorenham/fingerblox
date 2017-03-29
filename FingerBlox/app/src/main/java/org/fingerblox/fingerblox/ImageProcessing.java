@@ -751,23 +751,23 @@ class ImageProcessing {
     }
 
     static Bitmap preprocess(Mat frame, int width, int height) {
+        // convert to grayscale
+        Mat frameGrey = new Mat(height, width, CvType.CV_8UC1);
+        Imgproc.cvtColor(frame, frameGrey, Imgproc.COLOR_BGR2GRAY, 1);
+
         // rotate
-        Mat rotatedFrame = new Mat(frame.rows(), frame.cols(), CvType.CV_8UC3);
-        Core.transpose(frame, rotatedFrame);
+        Mat rotatedFrame = new Mat(width, height, frameGrey.type());
+        Core.transpose(frameGrey, rotatedFrame);
         Core.flip(rotatedFrame, rotatedFrame, Core.ROTATE_180);
 
         // resize to match the surface view
-        Mat resizedFrame = new Mat(width, height, CvType.CV_8UC3);
+        Mat resizedFrame = new Mat(width, height, rotatedFrame.type());
         Imgproc.resize(rotatedFrame, resizedFrame, new Size(width, height));
-
-        // convert to grayscale
-        Mat frameGrey = new Mat(width, height, CvType.CV_8UC1);
-        Imgproc.cvtColor(resizedFrame, frameGrey, Imgproc.COLOR_BGR2GRAY, 1);
 
         // crop
         Mat ellipseMask = getEllipseMask(width, height);
-        Mat frameCropped = new Mat(frameGrey.rows(), frameGrey.cols(), frameGrey.type(), new Scalar(0));
-        frameGrey.copyTo(frameCropped, ellipseMask);
+        Mat frameCropped = new Mat(resizedFrame.rows(), resizedFrame.cols(), resizedFrame.type(), new Scalar(0));
+        resizedFrame.copyTo(frameCropped, ellipseMask);
 
         // histogram equalisation
         Mat frameHistEq = new Mat(frame.rows(), frameCropped.cols(), frameCropped.type());
@@ -777,9 +777,13 @@ class ImageProcessing {
         Mat frameRgba = new Mat(frameHistEq.rows(), frameHistEq.cols(), CvType.CV_8UC4);
         Imgproc.cvtColor(frameHistEq, frameRgba, Imgproc.COLOR_GRAY2RGBA);
 
+        // crop again to correct alpha
+        Mat frameAlpha = new Mat(frameRgba.rows(), frameRgba.cols(), CvType.CV_8UC4, new Scalar(0, 0, 0, 0));
+        frameRgba.copyTo(frameAlpha, ellipseMask);
+
         // convert to bitmap
-        Bitmap bmp = Bitmap.createBitmap(frameRgba.cols(), frameRgba.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(makeBlackTransparent(frameRgba), bmp);
+        Bitmap bmp = Bitmap.createBitmap(frameAlpha.cols(), frameAlpha.rows(), Bitmap.Config.ARGB_4444);
+        Utils.matToBitmap(frameAlpha, bmp);
 
         return bmp;
     }
@@ -788,7 +792,7 @@ class ImageProcessing {
 
     @NonNull
     private static Mat getEllipseMask(int width, int height) {
-        if (ellipseMask == null) {
+        if (ellipseMask == null || ellipseMask.cols() != width || ellipseMask.rows() != height) {
             int paddingX = (int) (CameraOverlayView.PADDING * (float) width);
             int paddingY = (int) (CameraOverlayView.PADDING * (float) height);
             RotatedRect box = new RotatedRect(
@@ -801,42 +805,5 @@ class ImageProcessing {
             Imgproc.ellipse(ellipseMask, box, new Scalar(255), -1);
         }
         return ellipseMask;
-    }
-
-    /**
-
-     * Make the black background of a PNG-Bitmap-Image transparent.
-     * code based on example at http://j.mp/1uCxOV5
-     * @param src rgba image
-     * @return output image
-     */
-
-    private static Mat makeBlackTransparent(Mat src) {
-
-        // init new matrices
-        Mat dst = new Mat(src.rows(), src.cols(), CvType.CV_8UC4);
-        Mat tmp = new Mat(src.rows(), src.cols(), CvType.CV_8UC4);
-        Mat alpha = new Mat(src.rows(), src.cols(), CvType.CV_8UC4);
-
-        // convert image to grayscale
-        Imgproc.cvtColor(src, tmp, Imgproc.COLOR_RGBA2GRAY);
-
-        // threshold the image to create alpha channel with complete transparency in black
-        // background region and zero transparency in foreground object region.
-        Imgproc.threshold(tmp, alpha, 100, 255, Imgproc.THRESH_BINARY);
-
-        // split the original image into three single channel.
-        List<Mat> rgb = new ArrayList<>(3);
-        Core.split(src, rgb);
-
-        // Create the final result by merging three single channel and alpha(BGRA order)
-        List<Mat> rgba = new ArrayList<>(4);
-        rgba.add(rgb.get(0));
-        rgba.add(rgb.get(1));
-        rgba.add(rgb.get(2));
-        rgba.add(alpha);
-        Core.merge(rgba, dst);
-
-        return dst;
     }
 }
