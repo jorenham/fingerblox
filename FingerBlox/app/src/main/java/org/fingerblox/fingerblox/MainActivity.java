@@ -10,7 +10,6 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
-import android.hardware.Camera.PreviewCallback;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -18,23 +17,14 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.RelativeLayout;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Range;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
 
 
 @SuppressWarnings("deprecation")
@@ -49,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private CameraView mOpenCvCameraView;
     private SurfaceView mCameraProcessPreview;
+    private boolean doPreview = true;
 
     static {
         if(!OpenCVLoader.initDebug()) {
@@ -123,12 +114,22 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 mOpenCvCameraView.takePicture();
             }
         });
+
         Button fixedFocusButton = (Button) findViewById(R.id.btn_fixfocus);
         assert fixedFocusButton != null;
         fixedFocusButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mOpenCvCameraView.fixFocusToggle();
+            }
+        });
+
+        Button togglePreviewButton = (Button) findViewById(R.id.btn_togglepreview);
+        assert togglePreviewButton != null;
+        togglePreviewButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                previewToggle();
             }
         });
 
@@ -164,7 +165,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     }
 
     public Mat onCameraFrame(Mat inputFrame) {
-        processFrame(inputFrame);
+        if (doPreview) {
+            processFrame(inputFrame);
+        }
         return inputFrame;
     }
 
@@ -174,15 +177,18 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         SurfaceHolder holder = mCameraProcessPreview.getHolder();
 
         try {
-            synchronized (holder) {
-                canvas = holder.lockCanvas(null);
-                Bitmap result = ImageProcessing.preprocess(frame, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
-                canvas.drawBitmap(result, 0, 0, new Paint());
-            }
+            canvas = holder.lockCanvas(null);
+            Bitmap result = ImageProcessing.preprocess(frame, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
+            canvas.drawBitmap(result, 0, 0, new Paint());
         } finally {
             if (canvas != null) {
                 holder.unlockCanvasAndPost(canvas);
             }
         }
+    }
+
+    private void previewToggle() {
+        doPreview = !doPreview;
+        mCameraProcessPreview.setVisibility(doPreview ? View.VISIBLE : View.INVISIBLE);
     }
 }
