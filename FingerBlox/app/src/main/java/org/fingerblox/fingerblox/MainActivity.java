@@ -174,9 +174,11 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         SurfaceHolder holder = mCameraProcessPreview.getHolder();
 
         try {
-            canvas = holder.lockCanvas(null);
-            Bitmap result = ImageProcessing.preprocess(frame, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
-            canvas.drawBitmap(result, 0, 0, new Paint());
+            synchronized (holder) {
+                canvas = holder.lockCanvas(null);
+                Bitmap result = ImageProcessing.preprocess(frame, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
+                canvas.drawBitmap(result, 0, 0, new Paint());
+            }
         } finally {
             if (canvas != null) {
                 holder.unlockCanvasAndPost(canvas);

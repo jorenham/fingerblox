@@ -4,6 +4,7 @@ package org.fingerblox.fingerblox;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -15,6 +16,7 @@ import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Range;
 import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.features2d.DescriptorExtractor;
@@ -24,6 +26,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 class ImageProcessing {
     public static final String TAG = "ImageProcessing";
@@ -747,7 +750,7 @@ class ImageProcessing {
         return mask;
     }
 
-    protected static Bitmap preprocess(Mat frame, int width, int height) {
+    static Bitmap preprocess(Mat frame, int width, int height) {
         // rotate
         Mat rotatedFrame = new Mat(frame.rows(), frame.cols(), CvType.CV_8UC3);
         Core.transpose(frame, rotatedFrame);
@@ -757,25 +760,14 @@ class ImageProcessing {
         Mat resizedFrame = new Mat(width, height, CvType.CV_8UC3);
         Imgproc.resize(rotatedFrame, resizedFrame, new Size(width, height));
 
-        // convert to greyscale
-        Mat frameGrey = new Mat(resizedFrame.rows(), resizedFrame.cols(), CvType.CV_8UC1);
+        // convert to grayscale
+        Mat frameGrey = new Mat(width, height, CvType.CV_8UC1);
         Imgproc.cvtColor(resizedFrame, frameGrey, Imgproc.COLOR_BGR2GRAY, 1);
 
         // crop
-        int paddingX = (int) CameraOverlayView.PADDING * frameGrey.cols();
-        int paddingY = (int) CameraOverlayView.PADDING * frameGrey.rows();
-        //Rect roi = new Rect(paddingX, paddingY, width - (2 * paddingX), height - (2 * paddingY));
-        Mat ellipse = new Mat(frameGrey.rows(), frameGrey.cols(), frameGrey.type());
-        Imgproc.ellipse(
-                ellipse,
-                new Point(width / 2, height / 2),
-                new Size(width - (2 * paddingX), height - (2 * paddingY)),
-                0, 0, 0,
-                new Scalar(255),
-                -1
-        );
-        Mat frameCropped = new Mat(frameGrey.rows(), frameGrey.rows(), frameGrey.type());
-        Core.bitwise_and(frameGrey, ellipse, frameCropped);
+        Mat ellipseMask = getEllipseMask(width, height);
+        Mat frameCropped = new Mat(frameGrey.rows(), frameGrey.cols(), frameGrey.type(), new Scalar(0));
+        frameGrey.copyTo(frameCropped, ellipseMask);
 
         // histogram equalisation
         Mat frameHistEq = new Mat(frame.rows(), frameCropped.cols(), frameCropped.type());
@@ -785,13 +777,66 @@ class ImageProcessing {
         Mat frameRgba = new Mat(frameHistEq.rows(), frameHistEq.cols(), CvType.CV_8UC4);
         Imgproc.cvtColor(frameHistEq, frameRgba, Imgproc.COLOR_GRAY2RGBA);
 
-        //Mat cropped = new Mat(width, height, CvType.CV_8UC4, new Scalar(255, 255, 255, 0));
-        //frameCropped.copyTo(cropped);
-
         // convert to bitmap
         Bitmap bmp = Bitmap.createBitmap(frameRgba.cols(), frameRgba.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(frameRgba, bmp);
+        Utils.matToBitmap(makeBlackTransparent(frameRgba), bmp);
 
         return bmp;
+    }
+
+    private static Mat ellipseMask;
+
+    @NonNull
+    private static Mat getEllipseMask(int width, int height) {
+        if (ellipseMask == null) {
+            int paddingX = (int) (CameraOverlayView.PADDING * (float) width);
+            int paddingY = (int) (CameraOverlayView.PADDING * (float) height);
+            RotatedRect box = new RotatedRect(
+                    new Point(width / 2, height / 2),
+                    new Size(width - (2 * paddingX), height - (2 * paddingY)),
+                    0
+            );
+            Log.i(TAG, (new Size(width - (2 * paddingX), height - (2 * paddingY))).toString());
+            ellipseMask = new Mat(height, width, CvType.CV_8UC1, new Scalar(0));
+            Imgproc.ellipse(ellipseMask, box, new Scalar(255), -1);
+        }
+        return ellipseMask;
+    }
+
+    /**
+
+     * Make the black background of a PNG-Bitmap-Image transparent.
+     * code based on example at http://j.mp/1uCxOV5
+     * @param src rgba image
+     * @return output image
+     */
+
+    private static Mat makeBlackTransparent(Mat src) {
+
+        // init new matrices
+        Mat dst = new Mat(src.rows(), src.cols(), CvType.CV_8UC4);
+        Mat tmp = new Mat(src.rows(), src.cols(), CvType.CV_8UC4);
+        Mat alpha = new Mat(src.rows(), src.cols(), CvType.CV_8UC4);
+
+        // convert image to grayscale
+        Imgproc.cvtColor(src, tmp, Imgproc.COLOR_RGBA2GRAY);
+
+        // threshold the image to create alpha channel with complete transparency in black
+        // background region and zero transparency in foreground object region.
+        Imgproc.threshold(tmp, alpha, 100, 255, Imgproc.THRESH_BINARY);
+
+        // split the original image into three single channel.
+        List<Mat> rgb = new ArrayList<>(3);
+        Core.split(src, rgb);
+
+        // Create the final result by merging three single channel and alpha(BGRA order)
+        List<Mat> rgba = new ArrayList<>(4);
+        rgba.add(rgb.get(0));
+        rgba.add(rgb.get(1));
+        rgba.add(rgb.get(2));
+        rgba.add(alpha);
+        Core.merge(rgba, dst);
+
+        return dst;
     }
 }
