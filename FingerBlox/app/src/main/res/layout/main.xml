@@ -12,6 +12,15 @@
         android:id="@+id/camera_preview"
         opencv:show_fps="true"
         opencv:camera_id="any" />
+    <SurfaceView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_centerInParent="true"
+        android:id="@+id/camera_process_preview"
+        android:visibility="visible" />
+
     <org.fingerblox.fingerblox.CameraOverlayView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -27,6 +36,15 @@
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_togglepreview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/toggle_preview"
+            android:visibility="visible"
+            android:background="@color/colorPrimaryDark"
+            android:layout_margin="5dp"/>
 
         <Button
             android:id="@+id/btn_fixfocus"
