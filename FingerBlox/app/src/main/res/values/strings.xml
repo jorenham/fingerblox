@@ -5,4 +5,6 @@
 
     <string name="capture">Capture</string>
     <string name="fix_focus">Fix Focus</string>
+
+    <string name="save_features">Save</string>
 </resources>
