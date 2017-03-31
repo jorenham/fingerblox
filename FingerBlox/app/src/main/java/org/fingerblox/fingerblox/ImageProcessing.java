@@ -189,7 +189,7 @@ class ImageProcessing {
     private Mat BGRToGray(byte[] data) {
         // Scale down the image for performance
         Bitmap tmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-        int targetWidth = 1500;
+        int targetWidth = 1200;
         if (tmp.getWidth() > targetWidth) {
             float scaleDownFactor = (float)targetWidth / tmp.getWidth();
             tmp = Bitmap.createScaledBitmap(tmp,
