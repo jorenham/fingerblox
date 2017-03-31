@@ -188,12 +188,16 @@ class ImageProcessing {
     @NonNull
     private Mat BGRToGray(byte[] data) {
         // Scale down the image for performance
-        float scaleDownFactor = 0.5f;
         Bitmap tmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-        tmp = Bitmap.createScaledBitmap(tmp,
-                (int)(tmp.getWidth()*scaleDownFactor),
-                (int)(tmp.getHeight()*scaleDownFactor),
-                true);
+        int targetWidth = 1200;
+        if (tmp.getWidth() > targetWidth) {
+            float scaleDownFactor = (float)targetWidth / tmp.getWidth();
+            tmp = Bitmap.createScaledBitmap(tmp,
+                    (int)(tmp.getWidth()*scaleDownFactor),
+                    (int)(tmp.getHeight()*scaleDownFactor),
+                    true);
+
+        }
         Mat BGRImage = new Mat (tmp.getWidth(), tmp.getHeight(), CvType.CV_8UC1);
         Utils.bitmapToMat(tmp, BGRImage);
         Mat res = emptyMat(BGRImage.cols(), BGRImage.rows());
