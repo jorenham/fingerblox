@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import org.opencv.*;
+import org.opencv.BuildConfig;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -26,7 +28,6 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 class ImageProcessing {
     public static final String TAG = "ImageProcessing";
@@ -42,12 +43,17 @@ class ImageProcessing {
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
     Bitmap getProcessedImage() {
-        Mat image = BGRToGray(data);
+        Mat imageColor = bytesToMat(data);
+        imageColor = skinDetection(imageColor);
+
+        Mat image = new Mat(imageColor.rows(), imageColor.cols(), CvType.CV_8UC1);
+        Imgproc.cvtColor(imageColor, image, Imgproc.COLOR_BGR2GRAY);
+
         image = rotateImage(image);
         image = cropFingerprint(image);
 
-        int rows = image.rows();
-        int cols = image.cols();
+        final int rows = image.rows();
+        final int cols = image.cols();
 
         // apply histogram equalization
         Mat equalized = new Mat(rows, cols, CvType.CV_32FC1);
@@ -188,25 +194,21 @@ class ImageProcessing {
         return src.submat(rowRange, colRange);
     }
 
-    @NonNull
-    private Mat BGRToGray(byte[] data) {
+    private Mat bytesToMat(byte[] data) {
         // Scale down the image for performance
-        Bitmap tmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+        Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
         int targetWidth = 1200;
-        if (tmp.getWidth() > targetWidth) {
-            float scaleDownFactor = (float)targetWidth / tmp.getWidth();
-            tmp = Bitmap.createScaledBitmap(tmp,
-                    (int)(tmp.getWidth()*scaleDownFactor),
-                    (int)(tmp.getHeight()*scaleDownFactor),
+        if (bmp.getWidth() > targetWidth) {
+            float scaleDownFactor = (float)targetWidth / bmp.getWidth();
+            bmp = Bitmap.createScaledBitmap(bmp,
+                    (int)(bmp.getWidth()*scaleDownFactor),
+                    (int)(bmp.getHeight()*scaleDownFactor),
                     true);
-
         }
-        Mat BGRImage = new Mat (tmp.getWidth(), tmp.getHeight(), CvType.CV_8UC1);
-        Utils.bitmapToMat(tmp, BGRImage);
-        Mat res = emptyMat(BGRImage.cols(), BGRImage.rows());
-        Imgproc.cvtColor(BGRImage, res, Imgproc.COLOR_BGR2GRAY, 4);
+        Mat BGRImage = new Mat (bmp.getWidth(), bmp.getHeight(), CvType.CV_8UC3);
+        Utils.bitmapToMat(bmp, BGRImage);
 
-        return res;
+        return BGRImage;
     }
 
     @NonNull
@@ -641,10 +643,12 @@ class ImageProcessing {
      * Apply mask, binary threshold, thinning, ..., etc.
      */
     private void enhancement(Mat source, Mat result, int blockSize, int rows, int cols, int padding) {
-        System.out.println("BLOX1: " + rows + " " + cols + " " + padding);
         Mat MatSnapShotMask = snapShotMask(rows, cols, padding);
-
         Mat paddedMask = imagePadding(MatSnapShotMask, blockSize);
+
+        if (BuildConfig.DEBUG && !paddedMask.size().equals(source.size())) {
+            throw new RuntimeException("Incompatible sizes of image and mask");
+        }
 
         // apply the original mask to get rid of extras
         Core.multiply(source, paddedMask, result, 1.0, CvType.CV_8UC1);
