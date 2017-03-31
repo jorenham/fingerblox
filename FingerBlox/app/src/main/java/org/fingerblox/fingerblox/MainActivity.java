@@ -14,6 +14,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.TextView;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
@@ -32,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             "ZsD+QIDAQAB";
 
     private CameraView mOpenCvCameraView;
+    private boolean staticTextViewsSet = false;
 
     static {
         if(!OpenCVLoader.initDebug()) {
@@ -117,6 +119,42 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 mOpenCvCameraView.fixFocusToggle();
             }
         });
+
+        updateStaticTextViews();
+
+    }
+
+    protected boolean updateStaticTextViews() {
+        Camera.Parameters params = null;
+        try {
+            params = mOpenCvCameraView.getCameraParameters();
+        } catch (NullPointerException e) {
+            return false;
+        }
+        TextView labelMacroEnabled = (TextView) findViewById(R.id.macro_available);
+        assert labelMacroEnabled != null;
+        String macroRes = params.getSupportedFocusModes().contains(
+                Camera.Parameters.FOCUS_MODE_MACRO
+        ) ? "True" : "False";
+        String macroEnabledText = labelMacroEnabled.getText().toString().replace("False", macroRes);
+        labelMacroEnabled.setText(macroEnabledText);
+        return true;
+    }
+
+    protected void updateDynamicTextViews() {
+        Camera.Parameters params = null;
+        try {
+            params = mOpenCvCameraView.getCameraParameters();
+        } catch (NullPointerException e) {
+            return;
+        }
+
+        TextView labelCurrentFocusMode = (TextView) findViewById(R.id.current_focus_mode);
+        assert labelCurrentFocusMode != null;
+        String focusModePreText = labelCurrentFocusMode.getText().toString().split(": ")[0];
+        String focusModeText = focusModePreText + ": " + params.getFocusMode();
+        labelCurrentFocusMode.setText(focusModeText);
+
     }
 
     @Override
@@ -139,12 +177,23 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     }
 
     public void onCameraViewStarted(int width, int height) {
+
     }
 
     public void onCameraViewStopped() {
     }
 
     public Mat onCameraFrame(Mat inputFrame) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (!staticTextViewsSet) {
+                    staticTextViewsSet = updateStaticTextViews();
+                }
+                updateDynamicTextViews();
+            }}
+        );
+
         return inputFrame;
     }
 }

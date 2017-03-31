@@ -5,11 +5,14 @@ import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import org.opencv.android.JavaCameraView;
 
 import java.util.ArrayList;
 import java.util.Collections;
+
+import javax.crypto.NullCipher;
 
 
 @SuppressWarnings("deprecation")
@@ -97,5 +100,14 @@ public class CameraView extends JavaCameraView implements PictureCallback {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         }
         mCamera.setParameters(parameters);
+    }
+
+    public Camera.Parameters getCameraParameters() {
+        try {
+            return mCamera.getParameters();
+        } catch (NullPointerException e) {
+            Log.i(TAG, "Could not retrieve camera parameters. Camera in CameraView == NULL");
+            throw e;
+        }
     }
 }
