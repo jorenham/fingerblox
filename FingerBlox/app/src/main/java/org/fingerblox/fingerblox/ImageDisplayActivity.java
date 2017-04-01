@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -96,6 +97,8 @@ public class ImageDisplayActivity extends AppCompatActivity {
     }
 
     protected void saveFeatures(String fileName){
+        boolean saveSuccess = true;
+
         MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
         Mat descriptors = ImageProcessing.getDescriptors();
 
@@ -117,42 +120,30 @@ public class ImageDisplayActivity extends AppCompatActivity {
             fw.flush();
             fw.close();
         } catch (Exception e){
+            saveSuccess = false;
             e.printStackTrace();
         }
+        if(saveSuccess) {
+            makeToast("Save success!");
 
-        try{
-            FileWriter fw;
+            SharedPreferences preferences = getSharedPreferences("PREFS", 0);
+            String fileNameList = preferences.getString("fileNameList", "");
 
-            File keypointsFile = new File(fileDir, fileName+kpFileSuffix);
-            fw = new FileWriter(keypointsFile);
-            fw.write(keypointsJSON);
-            fw.flush();
-            fw.close();
+            if (fileNameList.equals("")) {
+                fileNameList = fileName;
+            } else {
+                fileNameList += " " + fileName;
+            }
 
-            File descriptorsFile = new File(fileDir, fileName+descFileSuffix);
-            fw = new FileWriter(descriptorsFile);
-            fw.write(descriptorsJSON);
-            fw.flush();
-            fw.close();
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+            SharedPreferences.Editor editor = preferences.edit();
 
-        SharedPreferences preferences = getSharedPreferences("PREFS", 0);
-        String fileNameList = preferences.getString("fileNameList", "");
+            editor.putString("fileNameList", fileNameList);
 
-        if(fileNameList.equals("")){
-            fileNameList = fileName;
+            editor.apply();
         }
         else{
-            fileNameList += " " + fileName;
+            makeToast("Save failed!");
         }
-
-        SharedPreferences.Editor editor = preferences.edit();
-
-        editor.putString("fileNameList", fileNameList);
-
-        editor.apply();
     }
 
     public void openMatchDialog() {
@@ -337,5 +328,10 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         this.finish();
+    }
+
+    public void makeToast(String toShow){
+        Toast toast = Toast.makeText(getApplicationContext(), toShow, Toast.LENGTH_SHORT);
+        toast.show();
     }
 }
