@@ -12,15 +12,31 @@
         android:layout_height="match_parent"
         app:srcCompat="@android:color/background_dark" />
 
-    <Button
-        android:id="@+id/btn_save_feat"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/save_features"
-        android:visibility="visible"
-        android:background="@color/colorPrimary"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
-        android:layout_margin="5dp"/>
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_match_feat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/match_features"
+            android:visibility="visible"
+            android:background="@color/colorPrimary"
+            android:layout_margin="5dp"/>
+
+        <Button
+            android:id="@+id/btn_save_feat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/save_features"
+            android:visibility="visible"
+            android:background="@color/colorPrimary"
+            android:layout_margin="5dp"/>
+
+    </LinearLayout>
 
 </RelativeLayout>

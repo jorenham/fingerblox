@@ -2,7 +2,7 @@ package org.fingerblox.fingerblox;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
+import android.content.SharedPreferences;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,34 +10,35 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import org.opencv.android.Utils;
-import org.opencv.core.CvException;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
-import org.opencv.core.Size;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 public class ImageDisplayActivity extends AppCompatActivity {
     public static final String TAG = "ImageDisplayActivity";
     public File fileDir;
+    public final String kpFileSuffix = "_keypoints";
+    public final String descFileSuffix = "_descriptors";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +59,15 @@ public class ImageDisplayActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 openSaveDialog();
+            }
+        });
+
+        Button matchFeaturesButton = (Button) findViewById(R.id.btn_match_feat);
+        assert matchFeaturesButton != null;
+        matchFeaturesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openMatchDialog();
             }
         });
     }
@@ -95,13 +105,13 @@ public class ImageDisplayActivity extends AppCompatActivity {
         try{
             FileWriter fw;
 
-            File keypointsFile = new File(fileDir, fileName+"_keypoints");
+            File keypointsFile = new File(fileDir, fileName+kpFileSuffix);
             fw = new FileWriter(keypointsFile);
             fw.write(keypointsJSON);
             fw.flush();
             fw.close();
 
-            File descriptorsFile = new File(fileDir, fileName+"_descriptors");
+            File descriptorsFile = new File(fileDir, fileName+descFileSuffix);
             fw = new FileWriter(descriptorsFile);
             fw.write(descriptorsJSON);
             fw.flush();
@@ -111,15 +121,15 @@ public class ImageDisplayActivity extends AppCompatActivity {
         }
 
         try{
-            FileWriter fw = null;
+            FileWriter fw;
 
-            File keypointsFile = new File(fileDir, fileName+"_keypoints");
+            File keypointsFile = new File(fileDir, fileName+kpFileSuffix);
             fw = new FileWriter(keypointsFile);
             fw.write(keypointsJSON);
             fw.flush();
             fw.close();
 
-            File descriptorsFile = new File(fileDir, fileName+"_descriptors");
+            File descriptorsFile = new File(fileDir, fileName+descFileSuffix);
             fw = new FileWriter(descriptorsFile);
             fw.write(descriptorsJSON);
             fw.flush();
@@ -128,19 +138,102 @@ public class ImageDisplayActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        /*
-        Read the file using:
+        SharedPreferences preferences = getSharedPreferences("PREFS", 0);
+        String fileNameList = preferences.getString("fileNameList", "");
 
-        File file = new File(fileDir, fileName+"_keypoints");
-        FileInputStream is = new FileInputStream(file);
-        int size = is.available();
-        byte[] buffer = new byte[size];
-        is.read(buffer);
-        is.close();
-        String json = new String(buffer);
+        if(fileNameList.equals("")){
+            fileNameList = fileName;
+        }
+        else{
+            fileNameList += " " + fileName;
+        }
 
-        Then convert using jsonToMat or jsonToKeypoints
-        */
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putString("fileNameList", fileNameList);
+
+        editor.apply();
+    }
+
+    public void openMatchDialog() {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+        final View dialogView = inflater.inflate(R.layout.match_dialog, null);
+        dialogBuilder.setView(dialogView);
+
+        final Spinner fileNameSpinner = (Spinner) dialogView.findViewById(R.id.filename_spinner);
+        List<String> spinnerArray =  new ArrayList<>();
+        SharedPreferences preferences = getSharedPreferences("PREFS", 0);
+        String[] fileNameList = preferences.getString("fileNameList", "").split(" ");
+        spinnerArray.addAll(Arrays.asList(fileNameList));
+
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, spinnerArray);
+
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        fileNameSpinner.setAdapter(spinnerAdapter);
+
+        dialogBuilder.setMessage("Select filename");
+        dialogBuilder.setPositiveButton("Match", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                matchFeatures(fileNameSpinner.getSelectedItem().toString());
+            }
+        });
+        dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                //do nothing
+            }
+        });
+        AlertDialog saveDialog = dialogBuilder.create();
+        saveDialog.show();
+    }
+
+    public void matchFeatures(String fileName){
+        String[] loadedFeatures = loadFiles(fileName);
+
+        Log.d(TAG, "Features loaded from file");
+        Log.d(TAG, "Keypoints: "+loadedFeatures[0]);
+        Log.d(TAG, "Descriptors: "+loadedFeatures[1]);
+
+        MatOfKeyPoint keypointsToMatch = jsonToKeypoints(loadedFeatures[0]);
+        Mat descriptorsToMatch = jsonToMat(loadedFeatures[1]);
+
+        // Current keypoints: MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
+        // Current descriptors: Mat descriptors = ImageProcessing.getDescriptors();
+
+        //TODO: match current keypoints and descriptors with loaded ones
+    }
+
+    public String[] loadFiles(String fileName){
+        String[] res = new String[2];
+
+        try {
+            File kpFile = new File(fileDir, fileName + kpFileSuffix);
+            FileInputStream is = new FileInputStream(kpFile);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            String kpJson = new String(buffer);
+            res[0] = kpJson;
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+
+        try {
+            File descFile = new File(fileDir, fileName + descFileSuffix);
+            FileInputStream is = new FileInputStream(descFile);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            String descJson = new String(buffer);
+            res[1] = descJson;
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return res;
     }
 
     public String keypointsToJSON(MatOfKeyPoint kps){
@@ -149,9 +242,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
         JsonArray jsonArr = new JsonArray();
 
         KeyPoint[] kpsArray = kps.toArray();
-        for(int i=0; i<kpsArray.length; i++){
-            KeyPoint kp = kpsArray[i];
-
+        for(KeyPoint kp : kpsArray){
             JsonObject obj = new JsonObject();
 
             obj.addProperty("class_id", kp.class_id);
@@ -183,12 +274,10 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
             JsonObject obj = (JsonObject) jsonArr.get(i);
 
-            Point point = new Point(
-                obj.get("x").getAsDouble(),
-                obj.get("y").getAsDouble()
-            );
-
-            kp.pt = point;
+            kp.pt = new Point(
+                        obj.get("x").getAsDouble(),
+                        obj.get("y").getAsDouble()
+                    );
             kp.class_id = obj.get("class_id").getAsInt();
             kp.size = obj.get("size").getAsFloat();
             kp.angle = obj.get("angle").getAsFloat();
@@ -223,9 +312,8 @@ public class ImageDisplayActivity extends AppCompatActivity {
         obj.addProperty("data", dataString);
 
         Gson gson = new Gson();
-        String json = gson.toJson(obj);
 
-        return json;
+        return gson.toJson(obj);
     }
 
     public static Mat jsonToMat(String json){
