@@ -3,6 +3,7 @@ package org.fingerblox.fingerblox;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.Camera;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -28,6 +29,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 class ImageProcessing {
     public static final String TAG = "ImageProcessing";
@@ -84,9 +86,9 @@ class ImageProcessing {
         Imgproc.Canny(skinMask, edges, 15, 150);
 
         // dilate the mask
-        final Size kernelSize = new Size(6, 6);
+        final Size kernelSize = new Size(11, 11);
         final Point anchor = new Point(-1, -1);
-        final int iterations = 1;
+        final int iterations = 2;
 
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, kernelSize);
         Imgproc.dilate(edges, edges, kernel, anchor, iterations);
@@ -104,10 +106,16 @@ class ImageProcessing {
         keypointsField = keypoints;
 
         KeyPoint[] keypointArray = keypoints.toArray();
+        ArrayList<KeyPoint> filteredKeypointArray = new ArrayList<>(keypointArray.length);
+
         for (KeyPoint k : keypointArray) {
-            k.size /= 8;
+            if (edges.get((int)k.pt.y, (int)k.pt.x)[0] <= 0.0) {
+                k.size /= 8;
+                filteredKeypointArray.add(k);
+            }
         }
-        keypoints.fromArray(keypointArray);
+        keypoints.fromList(filteredKeypointArray);
+
 
         Mat descriptors = new Mat();
         brief.compute(skeleton, keypoints, descriptors);
