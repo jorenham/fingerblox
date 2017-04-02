@@ -14,7 +14,9 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
@@ -120,6 +122,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             @Override
             public void onClick(View v) {
                 mOpenCvCameraView.fixFocusToggle();
+            }
+        });
+
+        final ToggleButton infoToggleButton = (ToggleButton) findViewById(R.id.btn_info_toggle);
+        assert infoToggleButton != null;
+        infoToggleButton.setOnCheckedChangeListener(new ToggleButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton v, boolean checked) {
+                int visibility = checked ? View.VISIBLE : View.INVISIBLE;
+                findViewById(R.id.layout_info).setVisibility(visibility);
             }
         });
 
