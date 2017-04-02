@@ -27,7 +27,7 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/macro_available"
+            android:id="@+id/lbl_macro_available"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -35,11 +35,27 @@
             android:textColor="@android:color/holo_red_dark" />
 
         <TextView
-            android:id="@+id/current_focus_mode"
+            android:id="@+id/lbl_current_focus_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Current Focus Mode: "
+            android:textColor="@android:color/holo_red_dark" />
+
+        <TextView
+            android:id="@+id/lbl_resolution"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Resolution: "
+            android:textColor="@android:color/holo_red_dark" />
+
+        <TextView
+            android:id="@+id/lbl_focus_distance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Focus Distance: ~0.0cm"
             android:textColor="@android:color/holo_red_dark" />
     </LinearLayout>
 

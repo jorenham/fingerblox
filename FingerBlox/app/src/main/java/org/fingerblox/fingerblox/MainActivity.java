@@ -22,6 +22,9 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener {
     public static final String TAG = "MainActivity";
@@ -131,13 +134,20 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         } catch (NullPointerException e) {
             return false;
         }
-        TextView labelMacroEnabled = (TextView) findViewById(R.id.macro_available);
+
+        TextView labelMacroEnabled = (TextView) findViewById(R.id.lbl_macro_available);
         assert labelMacroEnabled != null;
         String macroRes = params.getSupportedFocusModes().contains(
                 Camera.Parameters.FOCUS_MODE_MACRO
         ) ? "True" : "False";
         String macroEnabledText = labelMacroEnabled.getText().toString().replace("False", macroRes);
         labelMacroEnabled.setText(macroEnabledText);
+
+        TextView labelResolution = (TextView) findViewById(R.id.lbl_resolution);
+        assert labelResolution != null;
+        String resolution = params.getPictureSize().width + " x " + params.getPictureSize().height;
+        String labelResText = labelResolution.getText().toString();
+        labelResolution.setText(labelResText + " " + resolution);
         return true;
     }
 
@@ -149,12 +159,22 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             return;
         }
 
-        TextView labelCurrentFocusMode = (TextView) findViewById(R.id.current_focus_mode);
+        TextView labelCurrentFocusMode = (TextView) findViewById(R.id.lbl_current_focus_mode);
         assert labelCurrentFocusMode != null;
         String focusModePreText = labelCurrentFocusMode.getText().toString().split(": ")[0];
         String focusModeText = focusModePreText + ": " + params.getFocusMode();
         labelCurrentFocusMode.setText(focusModeText);
 
+        TextView labelEstFocusDistance = (TextView) findViewById(R.id.lbl_focus_distance);
+        assert labelEstFocusDistance != null;
+        float[] focusDistanceData = new float[3];
+        params.getFocusDistances(focusDistanceData);
+
+        String focusDistanceText = String.format(Locale.ENGLISH, "%.2f",
+                focusDistanceData[Camera.Parameters.FOCUS_DISTANCE_OPTIMAL_INDEX] * 100.0f);
+        String focusDistanceOldText = labelEstFocusDistance.getText().toString();
+        String focusDistanceRes = focusDistanceOldText.replaceAll("([0-9]+.[0-9]*)|Infinity", focusDistanceText);
+        labelEstFocusDistance.setText(focusDistanceRes);
     }
 
     @Override
