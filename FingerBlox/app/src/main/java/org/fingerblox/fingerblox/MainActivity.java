@@ -4,12 +4,17 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
@@ -28,6 +33,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 
+@SuppressWarnings("deprecation")
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener {
     public static final String TAG = "MainActivity";
     public static final String BASE64_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAi" +
@@ -39,6 +45,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private CameraView mOpenCvCameraView;
     private boolean staticTextViewsSet = false;
+  
+    private SurfaceView mCameraProcessPreview;
+    private boolean doPreview = true;
 
     static {
         if(!OpenCVLoader.initDebug()) {
@@ -64,9 +73,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private PictureCallback pictureCallback = new PictureCallback() {
         public void onPictureTaken(final byte[] data, Camera camera) {
-            camera.startPreview();
-            camera.setPreviewCallback(mOpenCvCameraView);
-
             final ProgressDialog progress = new ProgressDialog(MainActivity.this);
             progress.setTitle("Loading");
             progress.setMessage("Processing image...");
@@ -116,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 mOpenCvCameraView.takePicture();
             }
         });
+
         Button fixedFocusButton = (Button) findViewById(R.id.btn_fixfocus);
         assert fixedFocusButton != null;
         fixedFocusButton.setOnClickListener(new View.OnClickListener() {
@@ -124,6 +131,20 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 mOpenCvCameraView.fixFocusToggle();
             }
         });
+      
+        Button togglePreviewButton = (Button) findViewById(R.id.btn_togglepreview);
+        assert togglePreviewButton != null;
+        togglePreviewButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                previewToggle();
+            }
+        });
+
+        mCameraProcessPreview = (SurfaceView) findViewById(R.id.camera_process_preview);
+        mCameraProcessPreview.setZOrderOnTop(true);
+        mCameraProcessPreview.setZOrderMediaOverlay(true);
+        mCameraProcessPreview.getHolder().setFormat(PixelFormat.TRANSPARENT);
 
         final ToggleButton infoToggleButton = (ToggleButton) findViewById(R.id.btn_info_toggle);
         assert infoToggleButton != null;
@@ -179,6 +200,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         String focusDistanceOldText = labelEstFocusDistance.getText().toString();
         String focusDistanceRes = focusDistanceOldText.replaceAll("([0-9]+.[0-9]*)|Infinity", focusDistanceText);
         labelEstFocusDistance.setText(focusDistanceRes);
+
     }
 
     @Override
@@ -208,6 +230,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     }
 
     public Mat onCameraFrame(Mat inputFrame) {
+        // Update Labels
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -217,7 +240,32 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 updateDynamicTextViews();
             }}
         );
-
+        
+        if (doPreview) {
+            processFrame(inputFrame);
+        }
+      
         return inputFrame;
+    }
+
+    private void processFrame(Mat frame) {
+
+        Canvas canvas = null;
+        SurfaceHolder holder = mCameraProcessPreview.getHolder();
+
+        try {
+            canvas = holder.lockCanvas(null);
+            Bitmap result = ImageProcessing.preprocess(frame, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
+            canvas.drawBitmap(result, 0, 0, new Paint());
+        } finally {
+            if (canvas != null) {
+                holder.unlockCanvasAndPost(canvas);
+            }
+        }
+    }
+
+    private void previewToggle() {
+        doPreview = !doPreview;
+        mCameraProcessPreview.setVisibility(doPreview ? View.VISIBLE : View.INVISIBLE);
     }
 }

@@ -71,15 +71,14 @@ public class CameraView extends JavaCameraView implements PictureCallback {
         parameters.setFocusAreas(focusAreaList);
 
         Camera.Size max_size = null;
-        for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+        for (Camera.Size size : parameters.getSupportedPictureSizes()) {
             if (max_size == null || (size.height >= max_size.height &&
-                    size.width >= max_size.width && size.height <= 1024)) {
+                    size.width >= max_size.width)) {
                 max_size = size;
             }
         }
         assert max_size != null;
         parameters.setPictureSize(max_size.width, max_size.height);
-//        parameters.setPreviewSize(max_size.width, max_size.height);
         mCamera.setParameters(parameters);
     }
 

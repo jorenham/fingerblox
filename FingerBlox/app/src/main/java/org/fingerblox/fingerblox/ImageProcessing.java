@@ -4,6 +4,7 @@ package org.fingerblox.fingerblox;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -15,6 +16,7 @@ import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Range;
 import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.features2d.DescriptorExtractor;
@@ -24,6 +26,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 class ImageProcessing {
     public static final String TAG = "ImageProcessing";
@@ -188,12 +191,16 @@ class ImageProcessing {
     @NonNull
     private Mat BGRToGray(byte[] data) {
         // Scale down the image for performance
-        float scaleDownFactor = 0.5f;
         Bitmap tmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-        tmp = Bitmap.createScaledBitmap(tmp,
-                (int)(tmp.getWidth()*scaleDownFactor),
-                (int)(tmp.getHeight()*scaleDownFactor),
-                true);
+        int targetWidth = 1200;
+        if (tmp.getWidth() > targetWidth) {
+            float scaleDownFactor = (float)targetWidth / tmp.getWidth();
+            tmp = Bitmap.createScaledBitmap(tmp,
+                    (int)(tmp.getWidth()*scaleDownFactor),
+                    (int)(tmp.getHeight()*scaleDownFactor),
+                    true);
+
+        }
         Mat BGRImage = new Mat (tmp.getWidth(), tmp.getHeight(), CvType.CV_8UC1);
         Utils.bitmapToMat(tmp, BGRImage);
         Mat res = emptyMat(BGRImage.cols(), BGRImage.rows());
@@ -745,5 +752,62 @@ class ImageProcessing {
         Mat mask = new Mat(rows, cols, CvType.CV_8UC1, scalarBlack);
         Imgproc.ellipse(mask, center, axes, 0, 0, 360, scalarWhite, thickness, lineType, 0);
         return mask;
+    }
+
+    static Bitmap preprocess(Mat frame, int width, int height) {
+        // convert to grayscale
+        Mat frameGrey = new Mat(height, width, CvType.CV_8UC1);
+        Imgproc.cvtColor(frame, frameGrey, Imgproc.COLOR_BGR2GRAY, 1);
+
+        // rotate
+        Mat rotatedFrame = new Mat(width, height, frameGrey.type());
+        Core.transpose(frameGrey, rotatedFrame);
+        Core.flip(rotatedFrame, rotatedFrame, Core.ROTATE_180);
+
+        // resize to match the surface view
+        Mat resizedFrame = new Mat(width, height, rotatedFrame.type());
+        Imgproc.resize(rotatedFrame, resizedFrame, new Size(width, height));
+
+        // crop
+        Mat ellipseMask = getEllipseMask(width, height);
+        Mat frameCropped = new Mat(resizedFrame.rows(), resizedFrame.cols(), resizedFrame.type(), new Scalar(0));
+        resizedFrame.copyTo(frameCropped, ellipseMask);
+
+        // histogram equalisation
+        Mat frameHistEq = new Mat(frame.rows(), frameCropped.cols(), frameCropped.type());
+        Imgproc.equalizeHist(frameCropped, frameHistEq);
+
+        // convert back to rgba
+        Mat frameRgba = new Mat(frameHistEq.rows(), frameHistEq.cols(), CvType.CV_8UC4);
+        Imgproc.cvtColor(frameHistEq, frameRgba, Imgproc.COLOR_GRAY2RGBA);
+
+        // crop again to correct alpha
+        Mat frameAlpha = new Mat(frameRgba.rows(), frameRgba.cols(), CvType.CV_8UC4, new Scalar(0, 0, 0, 0));
+        frameRgba.copyTo(frameAlpha, ellipseMask);
+
+        // convert to bitmap
+        Bitmap bmp = Bitmap.createBitmap(frameAlpha.cols(), frameAlpha.rows(), Bitmap.Config.ARGB_4444);
+        Utils.matToBitmap(frameAlpha, bmp);
+
+        return bmp;
+    }
+
+    private static Mat ellipseMask;
+
+    @NonNull
+    private static Mat getEllipseMask(int width, int height) {
+        if (ellipseMask == null || ellipseMask.cols() != width || ellipseMask.rows() != height) {
+            int paddingX = (int) (CameraOverlayView.PADDING * (float) width);
+            int paddingY = (int) (CameraOverlayView.PADDING * (float) height);
+            RotatedRect box = new RotatedRect(
+                    new Point(width / 2, height / 2),
+                    new Size(width - (2 * paddingX), height - (2 * paddingY)),
+                    0
+            );
+            Log.i(TAG, (new Size(width - (2 * paddingX), height - (2 * paddingY))).toString());
+            ellipseMask = new Mat(height, width, CvType.CV_8UC1, new Scalar(0));
+            Imgproc.ellipse(ellipseMask, box, new Scalar(255), -1);
+        }
+        return ellipseMask;
     }
 }

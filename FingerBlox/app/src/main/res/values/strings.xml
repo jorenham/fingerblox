@@ -5,6 +5,8 @@
 
     <string name="capture">Capture</string>
     <string name="fix_focus">Fix Focus</string>
+    <string name="toggle_preview">Toggle preview</string>
+  
     <string name="hide_info"><![CDATA[<]]></string>
     <string name="show_info"><![CDATA[>]]></string>
 </resources>
