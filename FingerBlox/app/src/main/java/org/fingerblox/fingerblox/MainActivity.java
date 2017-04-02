@@ -140,12 +140,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     }
 
     protected boolean updateStaticTextViews() {
-        Camera.Parameters params = null;
-        try {
-            params = mOpenCvCameraView.getCameraParameters();
-        } catch (NullPointerException e) {
-            return false;
-        }
+        Camera.Parameters params = mOpenCvCameraView.getCameraParameters();
+        if (params == null) return false;
 
         TextView labelMacroEnabled = (TextView) findViewById(R.id.lbl_macro_available);
         assert labelMacroEnabled != null;
@@ -164,12 +160,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     }
 
     protected void updateDynamicTextViews() {
-        Camera.Parameters params = null;
-        try {
-            params = mOpenCvCameraView.getCameraParameters();
-        } catch (NullPointerException e) {
-            return;
-        }
+        Camera.Parameters params = mOpenCvCameraView.getCameraParameters();
+        if (params == null) return;
 
         TextView labelCurrentFocusMode = (TextView) findViewById(R.id.lbl_current_focus_mode);
         assert labelCurrentFocusMode != null;

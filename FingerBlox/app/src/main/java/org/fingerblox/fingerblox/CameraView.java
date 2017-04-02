@@ -12,8 +12,6 @@ import org.opencv.android.JavaCameraView;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import javax.crypto.NullCipher;
-
 
 @SuppressWarnings("deprecation")
 public class CameraView extends JavaCameraView implements PictureCallback {
@@ -107,7 +105,7 @@ public class CameraView extends JavaCameraView implements PictureCallback {
             return mCamera.getParameters();
         } catch (NullPointerException e) {
             Log.i(TAG, "Could not retrieve camera parameters. Camera in CameraView == NULL");
-            throw e;
+            return null;
         }
     }
 }
