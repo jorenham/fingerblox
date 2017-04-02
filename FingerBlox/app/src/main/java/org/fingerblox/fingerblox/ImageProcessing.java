@@ -86,11 +86,11 @@ class ImageProcessing {
         Imgproc.Canny(skinMask, edges, 15, 150);
 
         // dilate the mask
-        final Size kernelSize = new Size(11, 11);
+        final Size kernelSize = new Size(6, 6);
         final Point anchor = new Point(-1, -1);
-        final int iterations = 2;
+        final int iterations = 1;
 
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, kernelSize);
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, kernelSize);
         Imgproc.dilate(edges, edges, kernel, anchor, iterations);
 
         return edges;
@@ -115,7 +115,6 @@ class ImageProcessing {
             }
         }
         keypoints.fromList(filteredKeypointArray);
-
 
         Mat descriptors = new Mat();
         brief.compute(skeleton, keypoints, descriptors);
