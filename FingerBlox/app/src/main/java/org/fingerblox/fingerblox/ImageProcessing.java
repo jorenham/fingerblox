@@ -35,6 +35,7 @@ class ImageProcessing {
     public static Mat descriptorsField;
 
     private byte[] data;
+    private Mat currentSkinMask;
 
     ImageProcessing(byte[] data) {
         this.data = data;
@@ -45,14 +46,17 @@ class ImageProcessing {
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
     Bitmap getProcessedImage() {
+
         Mat imageColor = bytesToMat(data);
+
+        imageColor = rotateImage(imageColor);
+        imageColor = cropFingerprint(imageColor);
+
+        currentSkinMask = null;
         imageColor = skinDetection(imageColor);
 
         Mat image = new Mat(imageColor.rows(), imageColor.cols(), CvType.CV_8UC1);
         Imgproc.cvtColor(imageColor, image, Imgproc.COLOR_BGR2GRAY);
-
-        image = rotateImage(image);
-        image = cropFingerprint(image);
 
         final int rows = image.rows();
         final int cols = image.cols();
@@ -67,13 +71,31 @@ class ImageProcessing {
 
         Mat skeleton = getSkeletonImage(floated, rows, cols);
 
-        Mat skeleton_with_keypoints = detectFeatures(skeleton);
+        Mat currentSkinMaskEdges = getSkinMaskEdges(currentSkinMask);
+        Mat skeleton_with_keypoints = detectFeatures(skeleton, currentSkinMaskEdges);
 
+        //return mat2Bitmap(currentSkinMaskEdges);
         return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
     }
 
+    private Mat getSkinMaskEdges(Mat skinMask) {
+        // Retrieve edges using Canny method
+        Mat edges = new Mat(skinMask.rows(), skinMask.cols(), CvType.CV_8UC1);
+        Imgproc.Canny(skinMask, edges, 15, 150);
+
+        // dilate the mask
+        final Size kernelSize = new Size(6, 6);
+        final Point anchor = new Point(-1, -1);
+        final int iterations = 1;
+
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, kernelSize);
+        Imgproc.dilate(edges, edges, kernel, anchor, iterations);
+
+        return edges;
+    }
+
     @NonNull
-    private Mat detectFeatures(Mat skeleton) {
+    private Mat detectFeatures(Mat skeleton, Mat edges) {
         FeatureDetector star = FeatureDetector.create(FeatureDetector.ORB);
         DescriptorExtractor brief = DescriptorExtractor.create(DescriptorExtractor.ORB);
 
@@ -97,7 +119,7 @@ class ImageProcessing {
         return results;
     }
 
-    public static Mat skinDetection(Mat src) {
+    public Mat skinDetection(Mat src) {
         // define the upper and lower boundaries of the HSV pixel
         // intensities to be considered 'skin'
         Scalar lower = new Scalar(0, 48, 80);
@@ -110,6 +132,8 @@ class ImageProcessing {
         // Mask the image for skin colors
         Mat skinMask = new Mat(hsvFrame.rows(), hsvFrame.cols(), CvType.CV_8U, new Scalar(3));
         Core.inRange(hsvFrame, lower, upper, skinMask);
+        currentSkinMask = new Mat(hsvFrame.rows(), hsvFrame.cols(), CvType.CV_8U, new Scalar(3));
+        skinMask.copyTo(currentSkinMask);
 
         // apply a series of erosions and dilations to the mask
         // using an elliptical kernel
