@@ -112,6 +112,8 @@ class ImageProcessing {
             if (edges.get((int)k.pt.y, (int)k.pt.x)[0] <= 0.0) {
                 k.size /= 8;
                 filteredKeypointArray.add(k);
+            } else {
+                Log.i(TAG, String.format("Filtered Keypoint: %s x %s, color: %s", (int) k.pt.y, (int) k.pt.x, edges.get((int)k.pt.y, (int)k.pt.x)[0]));
             }
         }
         keypoints.fromList(filteredKeypointArray);
@@ -260,7 +262,7 @@ class ImageProcessing {
      * OpenCV only supports landscape pictures, so we gotta rotate 90 degrees.
      */
     private Mat rotateImage(Mat image) {
-        Mat result = emptyMat(image.rows(), image.cols());
+        Mat result = emptyMat(image.rows(), image.cols(), 3);
 
         Core.transpose(image, result);
         Core.flip(result, result, 1);
