@@ -19,12 +19,18 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
+
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 
 @SuppressWarnings("deprecation")
@@ -38,6 +44,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             "ZsD+QIDAQAB";
 
     private CameraView mOpenCvCameraView;
+    private boolean staticTextViewsSet = false;
+  
     private SurfaceView mCameraProcessPreview;
     private boolean doPreview = true;
 
@@ -123,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 mOpenCvCameraView.fixFocusToggle();
             }
         });
-
+      
         Button togglePreviewButton = (Button) findViewById(R.id.btn_togglepreview);
         assert togglePreviewButton != null;
         togglePreviewButton.setOnClickListener(new View.OnClickListener() {
@@ -137,6 +145,62 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mCameraProcessPreview.setZOrderOnTop(true);
         mCameraProcessPreview.setZOrderMediaOverlay(true);
         mCameraProcessPreview.getHolder().setFormat(PixelFormat.TRANSPARENT);
+
+        final ToggleButton infoToggleButton = (ToggleButton) findViewById(R.id.btn_info_toggle);
+        assert infoToggleButton != null;
+        infoToggleButton.setOnCheckedChangeListener(new ToggleButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton v, boolean checked) {
+                int visibility = checked ? View.VISIBLE : View.INVISIBLE;
+                findViewById(R.id.layout_info).setVisibility(visibility);
+            }
+        });
+
+        updateStaticTextViews();
+
+    }
+
+    protected boolean updateStaticTextViews() {
+        Camera.Parameters params = mOpenCvCameraView.getCameraParameters();
+        if (params == null) return false;
+
+        TextView labelMacroEnabled = (TextView) findViewById(R.id.lbl_macro_available);
+        assert labelMacroEnabled != null;
+        String macroRes = params.getSupportedFocusModes().contains(
+                Camera.Parameters.FOCUS_MODE_MACRO
+        ) ? "True" : "False";
+        String macroEnabledText = labelMacroEnabled.getText().toString().replace("False", macroRes);
+        labelMacroEnabled.setText(macroEnabledText);
+
+        TextView labelResolution = (TextView) findViewById(R.id.lbl_resolution);
+        assert labelResolution != null;
+        String resolution = params.getPictureSize().width + " x " + params.getPictureSize().height;
+        String labelResText = labelResolution.getText().toString();
+        labelResolution.setText(labelResText + " " + resolution);
+        return true;
+    }
+
+    protected void updateDynamicTextViews() {
+        Camera.Parameters params = mOpenCvCameraView.getCameraParameters();
+        if (params == null) return;
+
+        TextView labelCurrentFocusMode = (TextView) findViewById(R.id.lbl_current_focus_mode);
+        assert labelCurrentFocusMode != null;
+        String focusModePreText = labelCurrentFocusMode.getText().toString().split(": ")[0];
+        String focusModeText = focusModePreText + ": " + params.getFocusMode();
+        labelCurrentFocusMode.setText(focusModeText);
+
+        TextView labelEstFocusDistance = (TextView) findViewById(R.id.lbl_focus_distance);
+        assert labelEstFocusDistance != null;
+        float[] focusDistanceData = new float[3];
+        params.getFocusDistances(focusDistanceData);
+
+        String focusDistanceText = String.format(Locale.ENGLISH, "%.2f",
+                focusDistanceData[Camera.Parameters.FOCUS_DISTANCE_OPTIMAL_INDEX] * 100.0f);
+        String focusDistanceOldText = labelEstFocusDistance.getText().toString();
+        String focusDistanceRes = focusDistanceOldText.replaceAll("([0-9]+.[0-9]*)|Infinity", focusDistanceText);
+        labelEstFocusDistance.setText(focusDistanceRes);
+
     }
 
     @Override
@@ -159,15 +223,28 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     }
 
     public void onCameraViewStarted(int width, int height) {
+
     }
 
     public void onCameraViewStopped() {
     }
 
     public Mat onCameraFrame(Mat inputFrame) {
+        // Update Labels
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (!staticTextViewsSet) {
+                    staticTextViewsSet = updateStaticTextViews();
+                }
+                updateDynamicTextViews();
+            }}
+        );
+        
         if (doPreview) {
             processFrame(inputFrame);
         }
+      
         return inputFrame;
     }
 
