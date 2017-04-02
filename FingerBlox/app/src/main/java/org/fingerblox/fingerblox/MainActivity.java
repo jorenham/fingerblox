@@ -66,6 +66,13 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             progress.setCancelable(false);
             progress.show();
 
+            ImageProcessing ps = new ImageProcessing(data);
+            ImageSingleton.image = ps.getProcessedImage();
+            progress.dismiss();
+
+            Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
+            startActivity(intent);
+
             Thread mThread = new Thread() {
                 @Override
                 public void run() {

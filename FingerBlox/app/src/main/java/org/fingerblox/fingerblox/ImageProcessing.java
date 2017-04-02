@@ -58,7 +58,8 @@ class ImageProcessing {
 
         Mat skeleton_with_keypoints = detectFeatures(skeleton);
 
-        return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
+        //return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
+        return mat2Bitmap(skeleton);
     }
 
     @NonNull
@@ -157,6 +158,7 @@ class ImageProcessing {
         enhancement(matRidgeFilter, matEnhanced, blockSize, rows, cols, padding);
 
         return matEnhanced;
+        //return matRidgeOrientation;
     }
 
     private Bitmap mat2Bitmap(Mat src) {
