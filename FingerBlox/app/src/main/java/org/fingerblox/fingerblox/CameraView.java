@@ -5,6 +5,7 @@ import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import org.opencv.android.JavaCameraView;
 
@@ -70,15 +71,14 @@ public class CameraView extends JavaCameraView implements PictureCallback {
         parameters.setFocusAreas(focusAreaList);
 
         Camera.Size max_size = null;
-        for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+        for (Camera.Size size : parameters.getSupportedPictureSizes()) {
             if (max_size == null || (size.height >= max_size.height &&
-                    size.width >= max_size.width && size.height <= 1024)) {
+                    size.width >= max_size.width)) {
                 max_size = size;
             }
         }
         assert max_size != null;
         parameters.setPictureSize(max_size.width, max_size.height);
-//        parameters.setPreviewSize(max_size.width, max_size.height);
         mCamera.setParameters(parameters);
     }
 
@@ -97,5 +97,14 @@ public class CameraView extends JavaCameraView implements PictureCallback {
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         }
         mCamera.setParameters(parameters);
+    }
+
+    public Camera.Parameters getCameraParameters() {
+        try {
+            return mCamera.getParameters();
+        } catch (NullPointerException e) {
+            Log.i(TAG, "Could not retrieve camera parameters. Camera in CameraView == NULL");
+            return null;
+        }
     }
 }
