@@ -236,15 +236,18 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     public Mat onCameraFrame(Mat inputFrame) {
         // Update Labels
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!staticTextViewsSet) {
-                    staticTextViewsSet = updateStaticTextViews();
-                }
-                updateDynamicTextViews();
-            }}
-        );
+        if (viewDeviceInfo) {
+            runOnUiThread(new Runnable() {
+                              @Override
+                              public void run() {
+                                  if (!staticTextViewsSet) {
+                                      staticTextViewsSet = updateStaticTextViews();
+                                  }
+                                  updateDynamicTextViews();
+                              }
+                          }
+            );
+        }
         
         if (doPreview) {
             processFrame(inputFrame);
