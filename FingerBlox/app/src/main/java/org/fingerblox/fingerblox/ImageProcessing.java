@@ -38,17 +38,11 @@ class ImageProcessing {
         this.data = data;
     }
 
-    Bitmap getProcessedImage(Mat skeleton) {
-        Mat skeleton_with_keypoints = detectFeatures(skeleton);
-
-        return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
-    }
-
     /*
      * get fingerprint skeleton image. Large part of this code is copied from
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
-    Bitmap getProcessedImage() {
+    Mat fetchCroppedFingerprint() {
         Mat imageColor = bytesToMat(data);
         imageColor = skinDetection(imageColor);
 
@@ -58,38 +52,25 @@ class ImageProcessing {
         image = rotateImage(image);
         image = cropFingerprint(image);
 
-        final int rows = image.rows();
-        final int cols = image.cols();
+        return image;
+    }
 
-        // apply histogram equalization
-        Mat equalized = new Mat(rows, cols, CvType.CV_32FC1);
-        Imgproc.equalizeHist(image, equalized);
-
-        // convert to float, very important
-        Mat floated = new Mat(rows, cols, CvType.CV_32FC1);
-        equalized.convertTo(floated, CvType.CV_32FC1);
-
-        Mat skeleton = getSkeletonImage(floated, rows, cols);
-
-        return getProcessedImage(skeleton);
+    Bitmap fetchCroppedFingerprintImage(Mat fingerprint) {
+        return mat2Bitmap(fingerprint);
     }
 
     Mat fetchSkeleton() {
-        Mat imageColor = bytesToMat(data);
-        imageColor = skinDetection(imageColor);
+        Mat image = fetchCroppedFingerprint();
+        return fetchSkeleton(image);
+    }
 
-        Mat image = new Mat(imageColor.rows(), imageColor.cols(), CvType.CV_8UC1);
-        Imgproc.cvtColor(imageColor, image, Imgproc.COLOR_BGR2GRAY);
-
-        image = rotateImage(image);
-        image = cropFingerprint(image);
-
-        int rows = image.rows();
-        int cols = image.cols();
+    Mat fetchSkeleton(Mat croppedFingerPrint) {
+        int rows = croppedFingerPrint.rows();
+        int cols = croppedFingerPrint.cols();
 
         // apply histogram equalization
         Mat equalized = new Mat(rows, cols, CvType.CV_32FC1);
-        Imgproc.equalizeHist(image, equalized);
+        Imgproc.equalizeHist(croppedFingerPrint, equalized);
 
         // convert to float, very important
         Mat floated = new Mat(rows, cols, CvType.CV_32FC1);
@@ -102,6 +83,16 @@ class ImageProcessing {
         return mat2Bitmap(skeleton);
     }
 
+    Bitmap getProcessedImage() {
+        Mat skeleton = fetchSkeleton();
+        return getProcessedImage(skeleton);
+    }
+
+    Bitmap getProcessedImage(Mat skeleton) {
+        Mat skeleton_with_keypoints = detectFeatures(skeleton);
+
+        return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
+    }
 
     @NonNull
     private Mat detectFeatures(Mat skeleton) {
