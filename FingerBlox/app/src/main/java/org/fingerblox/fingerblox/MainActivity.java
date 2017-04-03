@@ -83,12 +83,22 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 @Override
                 public void run() {
                     ImageProcessing p = new ImageProcessing(data);
-                    Mat skeleton = p.fetchSkeleton();
-                    ImageSingleton.image = p.fetchSkeletonImage(skeleton);
+
+                    // Show Cropped Fingerprint Image
+                    Mat croppedFP = p.fetchCroppedFingerprint();
+                    ImageSingleton.image = p.fetchCroppedFingerprintImage(croppedFP);
                     progress.dismiss();
 
                     Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
                     startActivity(intent);
+
+                    // Show Skeleton Image
+                    Mat skeleton = p.fetchSkeleton(croppedFP);
+                    ImageSingleton.image = p.fetchSkeletonImage(skeleton);
+
+                    Intent intent2 = new Intent(MainActivity.this, ImageDisplayActivity.class);
+                    intent2 = intent2.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent2);
 
                     try {
                         sleep(1000);  // Used to not instantly switch to processed image
@@ -98,9 +108,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
                     ImageSingleton.image = p.getProcessedImage(skeleton);
 
-                    Intent intent2 = new Intent(MainActivity.this, ImageDisplayActivity.class);
-                    intent2 = intent2.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(intent2);
+                    Intent intent3 = new Intent(MainActivity.this, ImageDisplayActivity.class);
+                    intent3 = intent3.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent3);
                 }
             };
             mThread.start();
