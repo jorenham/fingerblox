@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
 
             ImageProcessing ps = new ImageProcessing(data);
-            ImageSingleton.image = ps.getSkeletonImage();
+            ImageSingleton.image = ps.fetchSkeletonImage();
             progress.dismiss();
 
             Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
