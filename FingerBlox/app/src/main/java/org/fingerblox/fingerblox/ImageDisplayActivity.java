@@ -1,5 +1,6 @@
 package org.fingerblox.fingerblox;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
@@ -24,4 +25,5 @@ public class ImageDisplayActivity extends AppCompatActivity {
         super.onBackPressed();
         this.finish();
     }
+
 }
