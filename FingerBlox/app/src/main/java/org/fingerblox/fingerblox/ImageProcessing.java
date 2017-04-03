@@ -73,8 +73,13 @@ class ImageProcessing {
         //return mat2Bitmap(skeleton);
     }
 
-    Bitmap getSkeletonImage() {
-        Mat image = BGRToGray(data);
+    Bitmap fetchSkeletonImage() {
+        Mat imageColor = bytesToMat(data);
+        imageColor = skinDetection(imageColor);
+
+        Mat image = new Mat(imageColor.rows(), imageColor.cols(), CvType.CV_8UC1);
+        Imgproc.cvtColor(imageColor, image, Imgproc.COLOR_BGR2GRAY);
+
         image = rotateImage(image);
         image = cropFingerprint(image);
 
@@ -91,11 +96,10 @@ class ImageProcessing {
 
         Mat skeleton = getSkeletonImage(floated, rows, cols);
 
-        Mat skeleton_with_keypoints = detectFeatures(skeleton);
-
         //return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
         return mat2Bitmap(skeleton);
     }
+
 
     @NonNull
     private Mat detectFeatures(Mat skeleton) {
