@@ -40,6 +40,12 @@ class ImageProcessing {
         this.data = data;
     }
 
+    Bitmap getProcessedImage(Mat skeleton) {
+        Mat skeleton_with_keypoints = detectFeatures(skeleton);
+
+        return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
+    }
+
     /*
      * get fingerprint skeleton image. Large part of this code is copied from
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
@@ -67,13 +73,10 @@ class ImageProcessing {
 
         Mat skeleton = getSkeletonImage(floated, rows, cols);
 
-        Mat skeleton_with_keypoints = detectFeatures(skeleton);
-
-        return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
-        //return mat2Bitmap(skeleton);
+        return getProcessedImage(skeleton);
     }
 
-    Bitmap fetchSkeletonImage() {
+    Mat fetchSkeleton() {
         Mat imageColor = bytesToMat(data);
         imageColor = skinDetection(imageColor);
 
@@ -94,9 +97,10 @@ class ImageProcessing {
         Mat floated = new Mat(rows, cols, CvType.CV_32FC1);
         equalized.convertTo(floated, CvType.CV_32FC1);
 
-        Mat skeleton = getSkeletonImage(floated, rows, cols);
+        return getSkeletonImage(floated, rows, cols);
+    }
 
-        //return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
+    Bitmap fetchSkeletonImage(Mat skeleton) {
         return mat2Bitmap(skeleton);
     }
 

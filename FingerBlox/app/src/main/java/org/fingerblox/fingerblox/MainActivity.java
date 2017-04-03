@@ -79,23 +79,29 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             progress.setCancelable(false);
             progress.show();
 
-
-            ImageProcessing ps = new ImageProcessing(data);
-            ImageSingleton.image = ps.fetchSkeletonImage();
-            progress.dismiss();
-
-            Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
-            startActivity(intent);
-
             Thread mThread = new Thread() {
                 @Override
                 public void run() {
                     ImageProcessing p = new ImageProcessing(data);
-                    ImageSingleton.image = p.getProcessedImage();
+                    Mat skeleton = p.fetchSkeleton();
+                    ImageSingleton.image = p.fetchSkeletonImage(skeleton);
                     progress.dismiss();
 
                     Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
                     startActivity(intent);
+
+
+                    try {
+                        sleep(1000);
+                    } catch (InterruptedException e) {
+                        Log.i(TAG, "Sleep interrupted");
+                    }
+                    finish();
+
+                    ImageSingleton.image = p.getProcessedImage(skeleton);
+
+                    Intent intent2 = new Intent(MainActivity.this, ImageDisplayActivity.class);
+                    startActivity(intent2);
                 }
             };
             mThread.start();
