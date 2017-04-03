@@ -1,0 +1,71 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" 
+    android:weightSum="5">
+    
+    <TextView 
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="0.5"
+        android:text="Enter filename:"/>
+
+    <EditText
+        android:id="@+id/filename_edittext"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.5"
+        android:ems="10" 
+        android:inputType="text"/>
+    
+    <TextView 
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="0.5"
+        android:text="Select file to load:"/>
+
+    <Spinner
+        android:id="@+id/filename_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.5" />
+    
+    <TextView 
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="0.5"
+        android:text="Output:"/>
+
+    <EditText
+        android:id="@+id/output_edittext"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5"
+        android:ems="10"
+        android:inputType="textMultiLine" 
+        android:focusable="false"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1" >
+
+        <Button
+            android:id="@+id/generate_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:text="Generate with name" />
+
+        <Button
+            android:id="@+id/load_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:text="Load from list" />
+    </RelativeLayout>
+    
+</LinearLayout>
