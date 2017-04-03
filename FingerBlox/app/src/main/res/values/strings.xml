@@ -5,6 +5,10 @@
 
     <string name="capture">Capture</string>
     <string name="fix_focus">Fix Focus</string>
+
+    <string name="save_features">Save</string>
+    <string name="match_features">Match</string>
+
     <string name="toggle_preview">Toggle preview</string>
   
     <string name="hide_info"><![CDATA[<]]></string>

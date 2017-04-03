@@ -31,6 +31,8 @@ import java.util.Collections;
 
 class ImageProcessing {
     public static final String TAG = "ImageProcessing";
+    public static MatOfKeyPoint keypointsField;
+    public static Mat descriptorsField;
 
     private byte[] data;
 
@@ -77,6 +79,7 @@ class ImageProcessing {
 
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
         star.detect(skeleton, keypoints);
+        keypointsField = keypoints;
 
         KeyPoint[] keypointArray = keypoints.toArray();
         for (KeyPoint k : keypointArray) {
@@ -86,6 +89,7 @@ class ImageProcessing {
 
         Mat descriptors = new Mat();
         brief.compute(skeleton, keypoints, descriptors);
+        descriptorsField = descriptors;
 
         Mat results = new Mat();
         Scalar color = new Scalar(255, 0, 0); // RGB
@@ -758,6 +762,14 @@ class ImageProcessing {
         return mask;
     }
 
+    public static MatOfKeyPoint getKeypoints(){
+        return keypointsField;
+    }
+
+    public static Mat getDescriptors(){
+        return descriptorsField;
+    }
+  
     static Bitmap preprocess(Mat frame, int width, int height) {
         // convert to grayscale
         Mat frameGrey = new Mat(height, width, CvType.CV_8UC1);
