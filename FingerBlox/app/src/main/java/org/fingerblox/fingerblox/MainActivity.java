@@ -18,10 +18,9 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.TextView;
-import android.widget.ToggleButton;
+
+import com.github.clans.fab.FloatingActionButton;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
@@ -30,7 +29,6 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 
 @SuppressWarnings("deprecation")
@@ -45,9 +43,12 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private CameraView mOpenCvCameraView;
     private boolean staticTextViewsSet = false;
-  
+
+    private CameraOverlayView mOverlayView;
     private SurfaceView mCameraProcessPreview;
     private boolean doPreview = true;
+
+    private boolean viewDeviceInfo = true;
 
     static {
         if(!OpenCVLoader.initDebug()) {
@@ -114,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setPictureListener(pictureCallback);
 
-        Button takePictureButton = (Button) findViewById(R.id.btn_takepicture);
+        FloatingActionButton takePictureButton = (FloatingActionButton) findViewById(R.id.btn_takepicture);
         assert takePictureButton != null;
         takePictureButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -123,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             }
         });
 
-        Button fixedFocusButton = (Button) findViewById(R.id.btn_fixfocus);
+        FloatingActionButton fixedFocusButton = (FloatingActionButton) findViewById(R.id.btn_fixfocus);
         assert fixedFocusButton != null;
         fixedFocusButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -131,8 +132,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 mOpenCvCameraView.fixFocusToggle();
             }
         });
-      
-        Button togglePreviewButton = (Button) findViewById(R.id.btn_togglepreview);
+
+        FloatingActionButton togglePreviewButton = (FloatingActionButton) findViewById(R.id.btn_togglepreview);
         assert togglePreviewButton != null;
         togglePreviewButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -146,15 +147,19 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mCameraProcessPreview.setZOrderMediaOverlay(true);
         mCameraProcessPreview.getHolder().setFormat(PixelFormat.TRANSPARENT);
 
-        final ToggleButton infoToggleButton = (ToggleButton) findViewById(R.id.btn_info_toggle);
+        final FloatingActionButton infoToggleButton = (FloatingActionButton) findViewById(R.id.btn_info_toggle);
         assert infoToggleButton != null;
-        infoToggleButton.setOnCheckedChangeListener(new ToggleButton.OnCheckedChangeListener() {
+        infoToggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton v, boolean checked) {
-                int visibility = checked ? View.VISIBLE : View.INVISIBLE;
+            public void onClick(View v) {
+                int visibility = viewDeviceInfo ? View.VISIBLE : View.INVISIBLE;
                 findViewById(R.id.layout_info).setVisibility(visibility);
+                viewDeviceInfo = !viewDeviceInfo;
             }
         });
+
+        mOverlayView = (CameraOverlayView) findViewById(R.id.overlay);
+        assert mOverlayView != null;
 
         updateStaticTextViews();
 
@@ -267,5 +272,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private void previewToggle() {
         doPreview = !doPreview;
         mCameraProcessPreview.setVisibility(doPreview ? View.VISIBLE : View.INVISIBLE);
+        mOverlayView.setVisibility(doPreview ? View.INVISIBLE : View.VISIBLE);
     }
 }

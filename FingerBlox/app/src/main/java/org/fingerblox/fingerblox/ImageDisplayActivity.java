@@ -11,7 +11,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
@@ -21,6 +20,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import com.github.clans.fab.FloatingActionButton;
 
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
@@ -54,7 +55,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
         Context context = getApplicationContext();
         fileDir = context.getFilesDir();
 
-        Button saveFeaturesButton = (Button) findViewById(R.id.btn_save_feat);
+        FloatingActionButton saveFeaturesButton = (FloatingActionButton) findViewById(R.id.btn_save_feat);
         assert saveFeaturesButton != null;
         saveFeaturesButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -63,7 +64,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
             }
         });
 
-        Button matchFeaturesButton = (Button) findViewById(R.id.btn_match_feat);
+        FloatingActionButton matchFeaturesButton = (FloatingActionButton) findViewById(R.id.btn_match_feat);
         assert matchFeaturesButton != null;
         matchFeaturesButton.setOnClickListener(new View.OnClickListener() {
             @Override

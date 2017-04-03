@@ -1,4 +1,5 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -12,31 +13,44 @@
         android:layout_height="match_parent"
         app:srcCompat="@android:color/background_dark" />
 
-    <LinearLayout
+    <com.github.clans.fab.FloatingActionButton
+        android:id="@+id/btn_save_feat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
+        android:src="@drawable/ic_backup_white_24dp"
+        android:text="@string/capture"
+        android:visibility="visible"
+        android:layout_margin="8dp"
         android:layout_alignParentBottom="true"
-        android:orientation="horizontal">
+        android:layout_alignParentStart="true"
+        app:fab_colorNormal="#2196F3"
+        app:fab_colorPressed="#82B1FF"
+        app:fab_colorRipple="#99FFFFFF"
+        app:fab_showShadow="true"
+        app:fab_shadowColor="#66000000"
+        app:fab_shadowRadius="4dp"
+        app:fab_size="normal"
+        app:fab_showAnimation="@anim/fab_scale_up"
+        app:fab_hideAnimation="@anim/fab_scale_down" />
 
-        <Button
-            android:id="@+id/btn_match_feat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/match_features"
-            android:visibility="visible"
-            android:background="@color/colorPrimary"
-            android:layout_margin="5dp"/>
-
-        <Button
-            android:id="@+id/btn_save_feat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/save_features"
-            android:visibility="visible"
-            android:background="@color/colorPrimary"
-            android:layout_margin="5dp"/>
-
-    </LinearLayout>
+    <com.github.clans.fab.FloatingActionButton
+        android:id="@+id/btn_match_feat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_fingerprint_white_24dp"
+        android:text="@string/capture"
+        android:visibility="visible"
+        android:layout_margin="8dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        app:fab_colorNormal="#4CAF50"
+        app:fab_colorPressed="#00E676"
+        app:fab_colorRipple="#99FFFFFF"
+        app:fab_showShadow="true"
+        app:fab_shadowColor="#66000000"
+        app:fab_shadowRadius="4dp"
+        app:fab_size="normal"
+        app:fab_showAnimation="@anim/fab_scale_up"
+        app:fab_hideAnimation="@anim/fab_scale_down" />
 
 </RelativeLayout>
