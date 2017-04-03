@@ -79,8 +79,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             progress.setCancelable(false);
             progress.show();
 
+
             ImageProcessing ps = new ImageProcessing(data);
-            ImageSingleton.image = ps.getProcessedImage();
+            ImageSingleton.image = ps.getSkeletonImage();
             progress.dismiss();
 
             Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
