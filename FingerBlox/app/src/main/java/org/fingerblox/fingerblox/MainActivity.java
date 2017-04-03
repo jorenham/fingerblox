@@ -90,17 +90,16 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
                     startActivity(intent);
 
-
                     try {
-                        sleep(1000);
+                        sleep(1000);  // Used to not instantly switch to processed image
                     } catch (InterruptedException e) {
                         Log.i(TAG, "Sleep interrupted");
                     }
-                    finish();
 
                     ImageSingleton.image = p.getProcessedImage(skeleton);
 
                     Intent intent2 = new Intent(MainActivity.this, ImageDisplayActivity.class);
+                    intent2 = intent2.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     startActivity(intent2);
                 }
             };

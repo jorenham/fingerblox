@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -324,10 +325,15 @@ public class ImageDisplayActivity extends AppCompatActivity {
         return mat;
     }
 
+    public void onNewIntent(Intent intent) {
+        ImageView mImageView = (ImageView) findViewById(R.id.image_view);
+        mImageView.setImageBitmap(ImageSingleton.image);
+    }
+
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         this.finish();
+        super.onBackPressed();
     }
 
     public void makeToast(String toShow){
