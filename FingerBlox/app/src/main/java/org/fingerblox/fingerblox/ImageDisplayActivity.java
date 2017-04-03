@@ -3,6 +3,7 @@ package org.fingerblox.fingerblox;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageView;
 
 
@@ -20,10 +21,15 @@ public class ImageDisplayActivity extends AppCompatActivity {
         mImageView.setImageBitmap(ImageSingleton.image);
     }
 
+    public void onNewIntent(Intent intent) {
+        ImageView mImageView = (ImageView) findViewById(R.id.image_view);
+        mImageView.setImageBitmap(ImageSingleton.image);
+    }
+
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         this.finish();
+        super.onBackPressed();
     }
 
 }
