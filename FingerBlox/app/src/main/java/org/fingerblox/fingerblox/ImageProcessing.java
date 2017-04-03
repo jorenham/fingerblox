@@ -58,6 +58,30 @@ class ImageProcessing {
 
         Mat skeleton_with_keypoints = detectFeatures(skeleton);
 
+        return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
+        //return mat2Bitmap(skeleton);
+    }
+
+    Bitmap getSkeletonImage() {
+        Mat image = BGRToGray(data);
+        image = rotateImage(image);
+        image = cropFingerprint(image);
+
+        int rows = image.rows();
+        int cols = image.cols();
+
+        // apply histogram equalization
+        Mat equalized = new Mat(rows, cols, CvType.CV_32FC1);
+        Imgproc.equalizeHist(image, equalized);
+
+        // convert to float, very important
+        Mat floated = new Mat(rows, cols, CvType.CV_32FC1);
+        equalized.convertTo(floated, CvType.CV_32FC1);
+
+        Mat skeleton = getSkeletonImage(floated, rows, cols);
+
+        Mat skeleton_with_keypoints = detectFeatures(skeleton);
+
         //return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
         return mat2Bitmap(skeleton);
     }
