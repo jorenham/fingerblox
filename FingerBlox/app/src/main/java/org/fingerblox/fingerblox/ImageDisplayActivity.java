@@ -75,7 +75,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
     }
 
     public void openSaveDialog() {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this, R.style.DialogTheme);
         LayoutInflater inflater = this.getLayoutInflater();
         final View dialogView = inflater.inflate(R.layout.save_dialog, null);
         dialogBuilder.setView(dialogView);
@@ -148,7 +148,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
     }
 
     public void openMatchDialog() {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this, R.style.DialogTheme);
         LayoutInflater inflater = this.getLayoutInflater();
         final View dialogView = inflater.inflate(R.layout.match_dialog, null);
         dialogBuilder.setView(dialogView);
