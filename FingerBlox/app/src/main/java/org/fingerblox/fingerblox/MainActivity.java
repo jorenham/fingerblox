@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +22,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
@@ -51,6 +53,12 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private boolean viewDeviceInfo = true;
     private boolean holdFocus = false;
 
+
+    private FloatingActionButton infoToggleButton;
+    private FloatingActionButton togglePreviewButton;
+    private FloatingActionButton fixedFocusButton;
+    private FloatingActionButton takePictureButton;
+
     static {
         if (!OpenCVLoader.initDebug()) {
             Log.e(TAG, "Failed to load OpenCV");
@@ -75,29 +83,41 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private PictureCallback pictureCallback = new PictureCallback() {
         public void onPictureTaken(final byte[] data, Camera camera) {
-            final ProgressDialog progress = new ProgressDialog(MainActivity.this);
-            progress.setTitle("Loading");
-            progress.setMessage("Processing image...");
-            progress.setCancelable(false);
-            progress.show();
+            AsyncTask<byte[], Integer, Bitmap> imProcessTask = new AsyncTask<byte[], Integer, Bitmap>() {
 
-            Thread mThread = new Thread() {
+                private FloatingActionMenu settingsButton;
+
+                private void enableButtons(boolean enable) {
+                    takePictureButton.setIndeterminate(!enable);
+                    takePictureButton.setEnabled(enable);
+                    settingsButton.setVisibility(enable ? View.VISIBLE : View.INVISIBLE);
+                }
+
                 @Override
-                public void run() {
-                    ImageProcessing p = new ImageProcessing(data);
-                    ImageSingleton.image = p.getProcessedImage();
-                    progress.dismiss();
+                protected void onPreExecute() {
+                    settingsButton = (FloatingActionMenu) findViewById(R.id.btn_settings);
+                    enableButtons(false);
+                }
 
+                @Override
+                protected Bitmap doInBackground(byte[]... params) {
+                    byte[] imageData = params[0];
+                    ImageProcessing p = new ImageProcessing(imageData);
+                    return p.getProcessedImage();
+                }
+
+                @Override
+                protected void onPostExecute(Bitmap bitmap) {
+                    enableButtons(true);
+
+                    ImageSingleton.image = bitmap;
                     Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
                     startActivity(intent);
                 }
             };
-            mThread.start();
+            imProcessTask.execute(data);
         }
     };
-    private FloatingActionButton infoToggleButton;
-    private FloatingActionButton togglePreviewButton;
-    private FloatingActionButton fixedFocusButton;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -119,8 +139,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setPictureListener(pictureCallback);
 
-        FloatingActionButton takePictureButton = (FloatingActionButton) findViewById(R.id.btn_takepicture);
+        takePictureButton = (FloatingActionButton) findViewById(R.id.btn_takepicture);
         assert takePictureButton != null;
+        takePictureButton.hideProgress();
         takePictureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:opencv="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -13,8 +12,8 @@
         android:layout_height="fill_parent"
         android:visibility="gone"
         android:id="@+id/camera_preview"
-        opencv:show_fps="true"
-        opencv:camera_id="any" />
+        app:show_fps="true"
+        app:camera_id="any" />
 
     <SurfaceView
         android:layout_width="wrap_content"
@@ -88,7 +87,7 @@
     </LinearLayout>
 
     <com.github.clans.fab.FloatingActionMenu
-        android:id="@+id/menu"
+        android:id="@+id/btn_settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -169,5 +168,9 @@
         app:fab_shadowRadius="4dp"
         app:fab_size="normal"
         app:fab_showAnimation="@anim/fab_scale_up"
-        app:fab_hideAnimation="@anim/fab_scale_down"/>
+        app:fab_hideAnimation="@anim/fab_scale_down"
+        app:fab_progress_color="#FF009688"
+        app:fab_progress_backgroundColor="#4D000000"
+        app:fab_progress_indeterminate="false"
+        app:fab_progress_showBackground="true" />
 </RelativeLayout>
