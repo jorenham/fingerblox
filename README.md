@@ -14,8 +14,8 @@ Features
 - [x] Autofocus and fixed focus on finger
 - [x] Extract fingerprint skeleton from picture
 - [x] Real-time preview of part of the fingerprint processing pipeline
+- [x] Register fingerprint
 - [ ] (in progress) Display intermediate processing steps during fingerprint processing
-- [ ] (in progress) Register fingerprint
 - [ ] Fingerprint authentication
 - [ ] Integrate the blockchain
 
