@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -18,10 +19,10 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.TextView;
-import android.widget.ToggleButton;
+
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener;
@@ -30,7 +31,6 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 
 @SuppressWarnings("deprecation")
@@ -45,12 +45,22 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private CameraView mOpenCvCameraView;
     private boolean staticTextViewsSet = false;
-  
+
+    private CameraOverlayView mOverlayView;
     private SurfaceView mCameraProcessPreview;
+
     private boolean doPreview = true;
+    private boolean viewDeviceInfo = true;
+    private boolean holdFocus = false;
+
+
+    private FloatingActionButton infoToggleButton;
+    private FloatingActionButton togglePreviewButton;
+    private FloatingActionButton fixedFocusButton;
+    private FloatingActionButton takePictureButton;
 
     static {
-        if(!OpenCVLoader.initDebug()) {
+        if (!OpenCVLoader.initDebug()) {
             Log.e(TAG, "Failed to load OpenCV");
         }
     }
@@ -59,38 +69,53 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         @Override
         public void onManagerConnected(int status) {
             switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                {
+                case LoaderCallbackInterface.SUCCESS: {
                     mOpenCvCameraView.enableView();
-                } break;
-                default:
-                {
+                }
+                break;
+                default: {
                     super.onManagerConnected(status);
-                } break;
+                }
+                break;
             }
         }
     };
 
     private PictureCallback pictureCallback = new PictureCallback() {
         public void onPictureTaken(final byte[] data, Camera camera) {
-            final ProgressDialog progress = new ProgressDialog(MainActivity.this);
-            progress.setTitle("Loading");
-            progress.setMessage("Processing image...");
-            progress.setCancelable(false);
-            progress.show();
+            AsyncTask<byte[], Integer, Bitmap> imProcessTask = new AsyncTask<byte[], Integer, Bitmap>() {
 
-            Thread mThread = new Thread() {
+                private FloatingActionMenu settingsButton;
+
+                private void enableButtons(boolean enable) {
+                    takePictureButton.setIndeterminate(!enable);
+                    takePictureButton.setEnabled(enable);
+                    settingsButton.setVisibility(enable ? View.VISIBLE : View.INVISIBLE);
+                }
+
                 @Override
-                public void run() {
-                    ImageProcessing p = new ImageProcessing(data);
-                    ImageSingleton.image = p.getProcessedImage();
-                    progress.dismiss();
+                protected void onPreExecute() {
+                    settingsButton = (FloatingActionMenu) findViewById(R.id.btn_settings);
+                    enableButtons(false);
+                }
 
+                @Override
+                protected Bitmap doInBackground(byte[]... params) {
+                    byte[] imageData = params[0];
+                    ImageProcessing p = new ImageProcessing(imageData);
+                    return p.getProcessedImage();
+                }
+
+                @Override
+                protected void onPostExecute(Bitmap bitmap) {
+                    enableButtons(true);
+
+                    ImageSingleton.image = bitmap;
                     Intent intent = new Intent(MainActivity.this, ImageDisplayActivity.class);
                     startActivity(intent);
                 }
             };
-            mThread.start();
+            imProcessTask.execute(data);
         }
     };
 
@@ -114,8 +139,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setPictureListener(pictureCallback);
 
-        Button takePictureButton = (Button) findViewById(R.id.btn_takepicture);
+        takePictureButton = (FloatingActionButton) findViewById(R.id.btn_takepicture);
         assert takePictureButton != null;
+        takePictureButton.hideProgress();
         takePictureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -123,16 +149,18 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             }
         });
 
-        Button fixedFocusButton = (Button) findViewById(R.id.btn_fixfocus);
+        fixedFocusButton = (FloatingActionButton) findViewById(R.id.btn_fixfocus);
         assert fixedFocusButton != null;
         fixedFocusButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                holdFocus = !holdFocus;
                 mOpenCvCameraView.fixFocusToggle();
+                fixedFocusButton.setLabelText(holdFocus ? "Release focus" : "Hold focus");
             }
         });
-      
-        Button togglePreviewButton = (Button) findViewById(R.id.btn_togglepreview);
+
+        togglePreviewButton = (FloatingActionButton) findViewById(R.id.btn_togglepreview);
         assert togglePreviewButton != null;
         togglePreviewButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -146,15 +174,20 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mCameraProcessPreview.setZOrderMediaOverlay(true);
         mCameraProcessPreview.getHolder().setFormat(PixelFormat.TRANSPARENT);
 
-        final ToggleButton infoToggleButton = (ToggleButton) findViewById(R.id.btn_info_toggle);
+        infoToggleButton = (FloatingActionButton) findViewById(R.id.btn_info_toggle);
         assert infoToggleButton != null;
-        infoToggleButton.setOnCheckedChangeListener(new ToggleButton.OnCheckedChangeListener() {
+        infoToggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton v, boolean checked) {
-                int visibility = checked ? View.VISIBLE : View.INVISIBLE;
+            public void onClick(View v) {
+                int visibility = viewDeviceInfo ? View.VISIBLE : View.INVISIBLE;
                 findViewById(R.id.layout_info).setVisibility(visibility);
+                infoToggleButton.setLabelText(viewDeviceInfo ? "Hide device info" : "Show device info");
+                viewDeviceInfo = !viewDeviceInfo;
             }
         });
+
+        mOverlayView = (CameraOverlayView) findViewById(R.id.overlay);
+        assert mOverlayView != null;
 
         updateStaticTextViews();
 
@@ -231,20 +264,23 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     public Mat onCameraFrame(Mat inputFrame) {
         // Update Labels
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (!staticTextViewsSet) {
-                    staticTextViewsSet = updateStaticTextViews();
-                }
-                updateDynamicTextViews();
-            }}
-        );
-        
+        if (viewDeviceInfo) {
+            runOnUiThread(new Runnable() {
+                              @Override
+                              public void run() {
+                                  if (!staticTextViewsSet) {
+                                      staticTextViewsSet = updateStaticTextViews();
+                                  }
+                                  updateDynamicTextViews();
+                              }
+                          }
+            );
+        }
+
         if (doPreview) {
             processFrame(inputFrame);
         }
-      
+
         return inputFrame;
     }
 
@@ -255,8 +291,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         try {
             canvas = holder.lockCanvas(null);
-            Bitmap result = ImageProcessing.preprocess(frame, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
-            canvas.drawBitmap(result, 0, 0, new Paint());
+            if (canvas != null) {
+                Bitmap result = ImageProcessing.preprocess(frame, mOpenCvCameraView.getWidth(), mOpenCvCameraView.getHeight());
+                canvas.drawBitmap(result, 0, 0, new Paint());
+            }
         } finally {
             if (canvas != null) {
                 holder.unlockCanvasAndPost(canvas);
@@ -266,6 +304,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private void previewToggle() {
         doPreview = !doPreview;
-        mCameraProcessPreview.setVisibility(doPreview ? View.VISIBLE : View.INVISIBLE);
+        if (doPreview) {
+            mCameraProcessPreview.setVisibility(View.VISIBLE);
+            mOverlayView.setVisibility(View.INVISIBLE);
+            togglePreviewButton.setLabelText("Disable preview");
+        } else {
+            mCameraProcessPreview.setVisibility(View.INVISIBLE);
+            mOverlayView.setVisibility(View.VISIBLE);
+            togglePreviewButton.setLabelText("Enable preview");
+        }
     }
 }

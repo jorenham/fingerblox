@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:opencv="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@color/colorPrimaryDark">
+
     <org.fingerblox.fingerblox.CameraView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:visibility="gone"
         android:id="@+id/camera_preview"
-        opencv:show_fps="true"
-        opencv:camera_id="any" />
+        app:show_fps="true"
+        app:camera_id="any" />
+
     <SurfaceView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -22,9 +25,12 @@
         android:visibility="visible" />
 
     <org.fingerblox.fingerblox.CameraOverlayView
+        android:id="@+id/overlay"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true"
+        android:visibility="invisible"/>
+
     <org.fingerblox.fingerblox.ScannerOverlayView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -35,22 +41,14 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <ToggleButton
-            android:id="@+id/btn_info_toggle"
-            style="buttonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:checked="true"
-            android:textOff="@string/show_info"
-            android:textOn="@string/hide_info" />
-
         <LinearLayout
             android:id="@+id/layout_info"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="invisible"
+            android:background="#66000000">
 
             <TextView
                 android:id="@+id/lbl_macro_available"
@@ -58,7 +56,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Macro available: False"
-                android:textColor="@android:color/holo_red_dark" />
+                android:textColor="#ffffff" />
 
             <TextView
                 android:id="@+id/lbl_current_focus_mode"
@@ -66,7 +64,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Current Focus Mode: "
-                android:textColor="@android:color/holo_red_dark" />
+                android:textColor="#ffffff" />
 
             <TextView
                 android:id="@+id/lbl_resolution"
@@ -74,7 +72,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Resolution: "
-                android:textColor="@android:color/holo_red_dark" />
+                android:textColor="#ffffff" />
 
             <TextView
                 android:id="@+id/lbl_focus_distance"
@@ -82,45 +80,97 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Focus Distance: ~0.0cm"
-                android:textColor="@android:color/holo_red_dark" />
+                android:textColor="#ffffff" />
 
         </LinearLayout>
 
     </LinearLayout>
 
-    <LinearLayout
+    <com.github.clans.fab.FloatingActionMenu
+        android:id="@+id/btn_settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
-        android:orientation="horizontal">
+        android:layout_alignParentStart="true"
+        android:layout_margin="8dp"
+        app:fab_showShadow="true"
+        app:fab_shadowColor="#66000000"
+        app:fab_shadowRadius="4dp"
+        app:fab_colorNormal="#2196F3"
+        app:fab_colorPressed="#82B1FF"
+        app:menu_colorRipple="#99FFFFFF"
+        app:menu_animationDelayPerItem="50"
+        app:menu_icon="@drawable/ic_settings_white_24dp"
+        app:menu_buttonSpacing="0dp"
+        app:menu_labels_margin="0dp"
+        app:menu_labels_showAnimation="@anim/fab_slide_in_from_right"
+        app:menu_labels_hideAnimation="@anim/fab_slide_out_to_right"
+        app:menu_labels_padding="4dp"
+        app:menu_labels_textColor="#FFFFFF"
+        app:menu_labels_textSize="14sp"
+        app:menu_labels_cornerRadius="3dp"
+        app:menu_labels_colorNormal="#99000000"
+        app:menu_labels_colorPressed="#444444"
+        app:menu_labels_colorRipple="#66FFFFFF"
+        app:menu_labels_showShadow="true"
+        app:menu_labels_position="right"
+        app:menu_openDirection="up"
+        app:menu_backgroundColor="@android:color/transparent"
+        app:menu_fab_label="Settings">
 
-        <Button
-            android:id="@+id/btn_togglepreview"
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/btn_info_toggle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/toggle_preview"
-            android:visibility="visible"
-            android:background="@color/colorPrimaryDark"
-            android:layout_margin="5dp"/>
+            android:src="@drawable/ic_perm_device_information_white_24dp"
+            app:fab_size="mini"
+            app:fab_label="Show device info"
+            app:fab_colorNormal="#2196F3"
+            app:fab_colorPressed="#82B1FF" />
 
-        <Button
+        <com.github.clans.fab.FloatingActionButton
             android:id="@+id/btn_fixfocus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/fix_focus"
-            android:visibility="visible"
-            android:background="@color/colorPrimaryDark"
-            android:layout_margin="5dp"/>
+            android:src="@drawable/ic_center_focus_weak_white_24dp"
+            app:fab_size="mini"
+            app:fab_label="Hold focus"
+            app:fab_colorNormal="#2196F3"
+            app:fab_colorPressed="#82B1FF" />
 
-        <Button
-            android:id="@+id/btn_takepicture"
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/btn_togglepreview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/capture"
-            android:visibility="visible"
-            android:background="@color/colorPrimary"
-            android:layout_margin="5dp" />
+            android:src="@drawable/ic_linked_camera_white_24dp"
+            app:fab_size="mini"
+            app:fab_label="Disable preview"
+            app:fab_colorNormal="#2196F3"
+            app:fab_colorPressed="#82B1FF" />
 
-    </LinearLayout>
+    </com.github.clans.fab.FloatingActionMenu>
+
+    <com.github.clans.fab.FloatingActionButton
+        android:id="@+id/btn_takepicture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_photo_camera_white_24dp"
+        android:text="@string/capture"
+        android:visibility="visible"
+        android:layout_margin="8dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        app:fab_colorNormal="#4CAF50"
+        app:fab_colorPressed="#00E676"
+        app:fab_colorRipple="#99FFFFFF"
+        app:fab_showShadow="true"
+        app:fab_shadowColor="#66000000"
+        app:fab_shadowRadius="4dp"
+        app:fab_size="normal"
+        app:fab_showAnimation="@anim/fab_scale_up"
+        app:fab_hideAnimation="@anim/fab_scale_down"
+        app:fab_progress_color="#FF009688"
+        app:fab_progress_backgroundColor="#4D000000"
+        app:fab_progress_indeterminate="false"
+        app:fab_progress_showBackground="true" />
 </RelativeLayout>
