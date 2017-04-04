@@ -26,4 +26,6 @@ Project Requirements
 
 Documentation
 ----------------
-See the [wiki](https://github.com/jorenham/fingerblox/wiki)
+- See the [wiki](https://github.com/jorenham/fingerblox/wiki)
+- Paper on [Overleaf](https://www.overleaf.com/read/rgfgshdnpkhr)
+- Paper draft on [Google Docs](https://docs.google.com/document/d/1i00Jio3MYiEpwcIjN6dyZs8hsday0fpol-XJ1wp7EvA/edit?usp=sharing)
