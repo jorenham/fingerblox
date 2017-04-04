@@ -2,6 +2,7 @@ package org.fingerblox.fingerblox;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -324,10 +325,15 @@ public class ImageDisplayActivity extends AppCompatActivity {
         return mat;
     }
 
+    public void onNewIntent(Intent intent) {
+        ImageView mImageView = (ImageView) findViewById(R.id.image_view);
+        mImageView.setImageBitmap(ImageSingleton.image);
+    }
+
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         this.finish();
+        super.onBackPressed();
     }
 
     public void makeToast(String toShow){

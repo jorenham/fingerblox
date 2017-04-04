@@ -35,7 +35,7 @@
             android:name=".ImageDisplayActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_image_display"
-            android:theme="@style/FullscreenTheme" />
+            android:theme="@style/FullscreenTheme"/>
     </application>
 
 </manifest>

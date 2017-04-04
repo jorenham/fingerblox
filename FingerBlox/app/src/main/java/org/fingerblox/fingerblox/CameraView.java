@@ -7,6 +7,7 @@ import android.hardware.Camera.PictureCallback;
 import android.util.AttributeSet;
 import android.util.Log;
 
+
 import org.opencv.android.JavaCameraView;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public class CameraView extends JavaCameraView implements PictureCallback {
     private static final int height = 2000;
 
     private PictureCallback pictureListener;
+    //private ImageView imageView;
 
     public CameraView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -43,6 +45,8 @@ public class CameraView extends JavaCameraView implements PictureCallback {
     public void onPictureTaken(byte[] data, Camera camera) {
         if (pictureListener != null) {
             pictureListener.onPictureTaken(data, camera);
+            //Bitmap photo = (Bitmap) data.getExtras();
+            //imageView.setImageBitmap(photo);
         }
     }
 

@@ -44,7 +44,7 @@ class ImageProcessing {
      * get fingerprint skeleton image. Large part of this code is copied from
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
-    Bitmap getProcessedImage() {
+    Mat fetchCroppedFingerprint() {
         Mat imageColor = bytesToMat(data);
         imageColor = skinDetection(imageColor);
 
@@ -54,19 +54,43 @@ class ImageProcessing {
         image = rotateImage(image);
         image = cropFingerprint(image);
 
-        final int rows = image.rows();
-        final int cols = image.cols();
+        return image;
+    }
+
+    Bitmap fetchCroppedFingerprintImage(Mat fingerprint) {
+        return mat2Bitmap(fingerprint);
+    }
+
+    Mat fetchSkeleton() {
+        Mat image = fetchCroppedFingerprint();
+        return fetchSkeleton(image);
+    }
+
+    Mat fetchSkeleton(Mat croppedFingerPrint) {
+        int rows = croppedFingerPrint.rows();
+        int cols = croppedFingerPrint.cols();
 
         // apply histogram equalization
         Mat equalized = new Mat(rows, cols, CvType.CV_32FC1);
-        Imgproc.equalizeHist(image, equalized);
+        Imgproc.equalizeHist(croppedFingerPrint, equalized);
 
         // convert to float, very important
         Mat floated = new Mat(rows, cols, CvType.CV_32FC1);
         equalized.convertTo(floated, CvType.CV_32FC1);
 
-        Mat skeleton = getSkeletonImage(floated, rows, cols);
+        return getSkeletonImage(floated, rows, cols);
+    }
 
+    Bitmap fetchSkeletonImage(Mat skeleton) {
+        return mat2Bitmap(skeleton);
+    }
+
+    Bitmap getProcessedImage() {
+        Mat skeleton = fetchSkeleton();
+        return getProcessedImage(skeleton);
+    }
+
+    Bitmap getProcessedImage(Mat skeleton) {
         Mat skeleton_with_keypoints = detectFeatures(skeleton);
 
         return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
@@ -170,6 +194,7 @@ class ImageProcessing {
         enhancement(matRidgeFilter, matEnhanced, blockSize, rows, cols, padding);
 
         return matEnhanced;
+        //return matRidgeOrientation;
     }
 
     private Bitmap mat2Bitmap(Mat src) {
