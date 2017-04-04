@@ -144,7 +144,7 @@
             android:layout_height="wrap_content"
             android:src="@drawable/ic_linked_camera_white_24dp"
             app:fab_size="mini"
-            app:fab_label="Toggle preview"
+            app:fab_label="Disable preview"
             app:fab_colorNormal="#2196F3"
             app:fab_colorPressed="#82B1FF" />
 
