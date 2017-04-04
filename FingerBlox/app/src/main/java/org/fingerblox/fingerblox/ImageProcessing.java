@@ -32,9 +32,9 @@ import java.util.Collections;
 import java.util.List;
 
 class ImageProcessing {
-    public static final String TAG = "ImageProcessing";
-    public static MatOfKeyPoint keypointsField;
-    public static Mat descriptorsField;
+    private static final String TAG = "ImageProcessing";
+    private static MatOfKeyPoint keypointsField;
+    private static Mat descriptorsField;
 
     private byte[] data;
     private Mat currentSkinMask;
@@ -53,8 +53,6 @@ class ImageProcessing {
 
         imageColor = rotateImage(imageColor);
         imageColor = cropFingerprint(imageColor);
-
-        currentSkinMask = null;
         imageColor = skinDetection(imageColor);
 
         Mat image = new Mat(imageColor.rows(), imageColor.cols(), CvType.CV_8UC1);
@@ -76,7 +74,6 @@ class ImageProcessing {
         Mat currentSkinMaskEdges = getSkinMaskEdges(currentSkinMask);
         Mat skeleton_with_keypoints = detectFeatures(skeleton, currentSkinMaskEdges);
 
-        //return mat2Bitmap(currentSkinMaskEdges);
         return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
     }
 
@@ -128,7 +125,7 @@ class ImageProcessing {
         return results;
     }
 
-    public Mat skinDetection(Mat src) {
+    private Mat skinDetection(Mat src) {
         // define the upper and lower boundaries of the HSV pixel
         // intensities to be considered 'skin'
         Scalar lower = new Scalar(0, 48, 80);
@@ -141,8 +138,8 @@ class ImageProcessing {
         // Mask the image for skin colors
         Mat skinMask = new Mat(hsvFrame.rows(), hsvFrame.cols(), CvType.CV_8U, new Scalar(3));
         Core.inRange(hsvFrame, lower, upper, skinMask);
-        currentSkinMask = new Mat(hsvFrame.rows(), hsvFrame.cols(), CvType.CV_8U, new Scalar(3));
-        skinMask.copyTo(currentSkinMask);
+//        currentSkinMask = new Mat(hsvFrame.rows(), hsvFrame.cols(), CvType.CV_8U, new Scalar(3));
+//        skinMask.copyTo(currentSkinMask);
 
         // apply a series of erosions and dilations to the mask
         // using an elliptical kernel
@@ -161,6 +158,9 @@ class ImageProcessing {
         Mat skin = new Mat(skinMask.rows(), skinMask.cols(), CvType.CV_8U, new Scalar(3));
         Imgproc.GaussianBlur(skinMask, skinMask, ksize, 0);
         Core.bitwise_and(src, src, skin, skinMask);
+
+        currentSkinMask = new Mat(skinMask.rows(), skinMask.cols(), CvType.CV_8UC1);
+        Imgproc.threshold(skin, currentSkinMask, 1, 255, Imgproc.THRESH_BINARY);
 
         return skin;
     }
@@ -205,16 +205,8 @@ class ImageProcessing {
         return matEnhanced;
     }
 
-    private Bitmap mat2Bitmap(Mat src) {
-        Mat rgbaMat = new Mat(src.width(), src.height(), CvType.CV_8U, new Scalar(4));
-        Imgproc.cvtColor(src, rgbaMat, Imgproc.COLOR_GRAY2RGBA, 4);
-        Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(rgbaMat, bmp);
-        return bmp;
-    }
-
     private Bitmap mat2Bitmap(Mat src, int code) {
-        Mat rgbaMat = new Mat(src.width(), src.height(), CvType.CV_8U, new Scalar(4));
+        Mat rgbaMat = new Mat(src.width(), src.height(), CvType.CV_8UC4);
         Imgproc.cvtColor(src, rgbaMat, code, 4);
         Bitmap bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(rgbaMat, bmp);
