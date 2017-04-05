@@ -105,14 +105,17 @@ class ImageProcessing {
         KeyPoint[] keypointArray = keypoints.toArray();
         ArrayList<KeyPoint> filteredKeypointArray = new ArrayList<>(keypointArray.length);
 
+        int filterCount = 0;
         for (KeyPoint k : keypointArray) {
             if (edges.get((int)k.pt.y, (int)k.pt.x)[0] <= 0.0) {
                 k.size /= 8;
                 filteredKeypointArray.add(k);
             } else {
-                Log.i(TAG, String.format("Filtered Keypoint: %s x %s, color: %s", (int) k.pt.y, (int) k.pt.x, edges.get((int)k.pt.y, (int)k.pt.x)[0]));
+                filterCount++;
             }
         }
+        Log.d(TAG, String.format("Filtered %s Keypoints", filterCount));
+
         keypoints.fromList(filteredKeypointArray);
 
         Mat descriptors = new Mat();
