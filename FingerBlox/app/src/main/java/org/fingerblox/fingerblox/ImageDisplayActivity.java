@@ -23,10 +23,12 @@ import com.google.gson.JsonParser;
 
 import com.github.clans.fab.FloatingActionButton;
 
+import org.opencv.core.DMatch;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -190,10 +192,8 @@ public class ImageDisplayActivity extends AppCompatActivity {
         MatOfKeyPoint keypointsToMatch = jsonToKeypoints(loadedFeatures[0]);
         Mat descriptorsToMatch = jsonToMat(loadedFeatures[1]);
 
-        // Current keypoints: MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
-        // Current descriptors: Mat descriptors = ImageProcessing.getDescriptors();
-
-        //TODO: match current keypoints and descriptors with loaded ones
+        double matchRatio = ImageProcessing.matchFeatures(keypointsToMatch, descriptorsToMatch);
+        Log.i(TAG, String.format("MATCH RATIO OMG WOW: %s", matchRatio));
     }
 
     public String[] loadFiles(String fileName){

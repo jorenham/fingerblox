@@ -6,13 +6,13 @@ import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import org.opencv.*;
 import org.opencv.BuildConfig;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
@@ -21,18 +21,23 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+
+import static org.opencv.core.Core.NORM_HAMMING;
 
 class ImageProcessing {
     public static final String TAG = "ImageProcessing";
-    public static MatOfKeyPoint keypointsField;
-    public static Mat descriptorsField;
+
+    private static MatOfKeyPoint keypointsField;
+    private static Mat descriptorsField;
 
     private byte[] data;
 
@@ -66,6 +71,7 @@ class ImageProcessing {
         equalized.convertTo(floated, CvType.CV_32FC1);
 
         Mat skeleton = getSkeletonImage(floated, rows, cols);
+        skeleton = thinning(skeleton);
 
         Mat skeleton_with_keypoints = detectFeatures(skeleton);
 
@@ -95,6 +101,14 @@ class ImageProcessing {
         Scalar color = new Scalar(255, 0, 0); // RGB
         Features2d.drawKeypoints(skeleton, keypoints, results, color, Features2d.DRAW_RICH_KEYPOINTS);
         return results;
+    }
+
+    /**
+     * Match using the ratio test and RANSAC.
+     * Returns the ratio matches and the total keypoints
+     */
+    static double matchFeatures(MatOfKeyPoint keypoints, Mat descriptors) {
+        return 1;
     }
 
     public static Mat skinDetection(Mat src) {
@@ -762,6 +776,17 @@ class ImageProcessing {
         return mask;
     }
 
+    private Mat thinning(Mat img) {
+        Mat thinned = new Mat(img.size(), CvType.CV_8UC1);
+
+        Imgproc.threshold(img, thinned, 0, 255, Imgproc.THRESH_OTSU);
+
+        Thinning t = new Thinning();
+        thinned = t.doJaniThinning(thinned);
+
+        return thinned;
+    }
+
     public static MatOfKeyPoint getKeypoints(){
         return keypointsField;
     }
@@ -820,10 +845,129 @@ class ImageProcessing {
                     new Size(width - (2 * paddingX), height - (2 * paddingY)),
                     0
             );
-            Log.i(TAG, (new Size(width - (2 * paddingX), height - (2 * paddingY))).toString());
             ellipseMask = new Mat(height, width, CvType.CV_8UC1, new Scalar(0));
             Imgproc.ellipse(ellipseMask, box, new Scalar(255), -1);
         }
         return ellipseMask;
     }
+}
+
+class Thinning {
+    private boolean B[][];
+
+    Mat doJaniThinning(Mat Image) {
+        B = new boolean[Image.rows()][Image.cols()];
+        boolean [][] B_ = new boolean[Image.rows()][Image.cols()];
+        for(int i=0; i<Image.rows(); i++)
+            for(int j=0; j<Image.cols(); j++)
+                B[i][j] = (Image.get(i, j)[0] <= 10); //not a mistake, in matlab first invert and then morph
+
+        boolean[][] prevB = new boolean[Image.rows()][Image.cols()];
+        final int maxIter = 1000;
+        for(int iter = 0; iter < maxIter; iter++) {
+            for (int i=0; i<Image.rows(); i++)
+                System.arraycopy(B[i], 0, prevB[i], 0, Image.cols());
+
+            //Iteration #1
+            for(int i=0; i<Image.rows(); i++)
+                for (int j = 0; j < Image.cols(); j++)
+                    B_[i][j] = !(B[i][j] && G1(i, j) && G2(i, j) && G3(i, j)) && B[i][j];
+
+            for(int i=0; i<Image.rows(); i++)
+                System.arraycopy(B_[i], 0, B[i], 0, Image.cols());
+
+
+            //Iteration #2
+            for(int i=0; i<Image.rows(); i++)
+                for (int j = 0; j < Image.cols(); j++)
+                    B_[i][j] = !(B[i][j] && G1(i, j) && G2(i, j) && G3_(i, j)) && B[i][j];
+
+
+            for(int i=0; i<Image.rows(); i++)
+                System.arraycopy(B_[i], 0, B[i], 0, Image.cols());
+
+            // stop when it doesn't change anymore
+            boolean convergence = true;
+            for (int i = 0; i < Image.rows(); i++)
+                convergence &= Arrays.equals(B[i], prevB[i]);
+            if (convergence){
+                break;
+            }
+        }
+
+
+        Mat r = Mat.zeros(Image.size(), CvType.CV_8UC1);
+
+        for(int i=0; i<Image.rows(); i++)
+            for(int j=0; j<Image.cols(); j++) {
+                if (B[i][j]) {
+                    r.put(i, j, 255);
+                }
+            }
+
+
+        return r;
+    }
+
+    private boolean x(int a, int i, int j) {
+        try {
+            switch(a) {
+                case 1:
+                    return B[i+1][j];
+                case 2:
+                    return B[i+1][j+1];
+                case 3:
+                    return B[i][j+1];
+                case 4:
+                    return B[i-1][j+1];
+                case 5:
+                    return B[i-1][j];
+                case 6:
+                    return B[i-1][j-1];
+                case 7:
+                    return B[i][j-1];
+                case 8:
+                    return B[i+1][j-1];
+            }
+        } catch(IndexOutOfBoundsException e) {
+            return false;
+        }
+        return false;
+    }
+
+    private boolean G1(int i, int j) {
+        int X = 0;
+        for(int q=1; q<=4; q++) {
+            if(!x(2*q-1, i, j) && (x(2*q, i, j) || x(2*q+1, i, j))) X++;
+        }
+        return X==1;
+    }
+
+    private boolean G2(int i, int j) {
+        int m = Math.min(n1(i, j), n2(i, j));
+        return (m==2 || m==3);
+    }
+
+    private int n1(int i, int j) {
+        int r = 0;
+        for(int q=1; q<=4; q++)
+            if(x(2*q-1, i, j) || x(2*q, i, j)) r++;
+        return r;
+    }
+
+    private int n2(int i, int j) {
+        int r = 0;
+        for(int q=1; q<=4; q++)
+            if(x(2*q, i, j) || x(2*q+1, i, j)) r++;
+        return r;
+    }
+
+    private boolean G3(int i, int j) {
+        return (x(2, i, j) || x(3, i, j) || !x(8, i, j)) && x(1, i, j);
+    }
+
+    private boolean G3_(int i, int j) {
+        return (x(6, i, j) || x(7, i, j) || !x(4, i, j)) && x(5, i, j);
+    }
+
 }
