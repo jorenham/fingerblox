@@ -1,0 +1,39 @@
+= Contributors
+
+== 2017
+
+==== Achievements
+
+* Starter team 2017.
+
+* Minimum Viable Product.
+
+* First release on Android Market.
+
+====== Team Leader/Full-stack Developer
+
+*Joren Hammudoglu* -> https://github.com/jorenham[jorenham]
+
+====== Android Developer
+
+*Jamey Sparreboom* -> https://github.com/Roccy[Roccy]
+
+====== Android Developer
+
+*Julian Faber* -> https://github.com/julianfx[julianfx]
+
+====== Android Developer
+
+*Shashank Rao* -> https://github.com/shashankpr[shashankpr]
+
+====== Android Developer
+
+*Johannes Rauhamaa* -> https://github.com/jrauhamaa[jrauhamaa]
+
+====== Android Developer/Technical Writer
+
+*Petros Samiotis* ->
+
+====== Management/Technical Writer
+
+*Lucio Guerchi*  -> https://github.com/luHub[luHub]
