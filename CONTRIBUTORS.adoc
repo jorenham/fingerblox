@@ -22,7 +22,7 @@
 
 *Julian Faber* -> https://github.com/julianfx[julianfx]
 
-====== Machine Learning Engineer
+====== Android Developer
 
 *Shashank Rao* -> https://github.com/shashankpr[shashankpr]
 
@@ -30,10 +30,10 @@
 
 *Johannes Rauhamaa* -> https://github.com/jrauhamaa[jrauhamaa]
 
-====== Machine Learning Engineer/Technical Writer
+====== Android Developer/Technical Writer
 
 *Petros Samiotis* ->
 
-====== Management/Technical Writer &nbsp;
+====== Management/Technical Writer
 
 *Lucio Guerchi*  -> https://github.com/luHub[luHub]
