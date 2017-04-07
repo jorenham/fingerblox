@@ -2,38 +2,14 @@
 
 == 2017
 
-==== Achievements
-
-* Starter team 2017.
-
-* Minimum Viable Product.
-
-* First release on Android Market.
-
-====== Team Leader/Full-stack Developer
-
-*Joren Hammudoglu* -> https://github.com/jorenham[jorenham]
-
-====== Android Developer
-
-*Jamey Sparreboom* -> https://github.com/Roccy[Roccy]
-
-====== Android Developer
-
-*Julian Faber* -> https://github.com/julianfx[julianfx]
-
-====== Android Developer
-
-*Shashank Rao* -> https://github.com/shashankpr[shashankpr]
-
-====== Android Developer
-
-*Johannes Rauhamaa* -> https://github.com/jrauhamaa[jrauhamaa]
-
-====== Android Developer/Technical Writer
-
-*Petros Samiotis* ->
-
-====== Management/Technical Writer
-
-*Lucio Guerchi*  -> https://github.com/luHub[luHub]
+[width="100%"]
+|=========================
+|*Name*  | *Role*  | *GitHub*   
+|Joren Hammudoglu  | Team Leader/Full-stack Developer  | https://github.com/jorenham[jorenham] 
+|Jamey Sparreboom  | Android Developer  | https://github.com/Roccy[Roccy]
+|Julian Faber  | Android Developer | https://github.com/julianfx[julianfx]
+|Shashank Rao | Android Developer | https://github.com/shashankpr[shashankpr] 
+|Johannes Rauhamaa  | Android Developer | https://github.com/jrauhamaa[jrauhamaa] 
+|Ioannis Petros Samiotis  | Android Developer/Technical Writer | https://github.com/Saminobi[Samiotis]  
+| Lucio Guerchi | Android Developer/Technical Writer | https://github.com/luHub[luHub] 
+|====================
