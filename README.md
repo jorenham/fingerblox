@@ -16,7 +16,7 @@ Features
 - [x] Real-time preview of part of the fingerprint processing pipeline
 - [x] Register fingerprint
 - [ ] (in progress) Display intermediate processing steps during fingerprint processing
-- [ ] Fingerprint authentication
+- [ ] (in progress) Fingerprint authentication
 - [ ] Integrate the blockchain
 
 Project Requirements
