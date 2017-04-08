@@ -39,7 +39,7 @@ public class AdaptiveSkinDetector {
     Histogram h;
 
     //image required for image motion histogram
-    Mat p1;
+    Mat p1 = new Mat();
 
     public AdaptiveSkinDetector() {
         _hueLower=3;
@@ -50,18 +50,10 @@ public class AdaptiveSkinDetector {
 
         //the global histogram is given 0.95% weightage
         _mergeFactor=0.95f;
-
-        //setting the historgram computation parameters
-        channels = new int[1];
-        channels[0]=0;
-
-        histSize = new int[1];
-        histSize[0]=30;
-
-        ranges = new float[2];
-        ranges[0]=0;
-        ranges[1]=30;
-        h = new Histogram(histSize, ranges, channels);
+        h = new Histogram();
+        channels = h._channels;
+        histSize = h._histSize;
+        ranges = h._histRange;
     }
 
     public void run(Mat image, Mat mask) {
@@ -91,14 +83,13 @@ public class AdaptiveSkinDetector {
 
         //obseve the pixels encountering motion
         Mat mmask = new Mat();
-        if(!p1.empty()) {
+        if(p1 != null && !p1.empty()) {
             Mat motion = new Mat();
             Core.absdiff(p1,ch.get(2),motion);
             inRange(motion,new Scalar(8,0,0),new Scalar(255,0,0),mmask);
             Imgproc.erode(mmask,mmask,new Mat());
             dilate(mmask,mmask,new Mat());
         }
-
 
         //compute a combined mask,representing motion of skin colored pixels
         if(!mmask.empty())
@@ -126,10 +117,10 @@ public class AdaptiveSkinDetector {
         _hueUpper=range1[1];
 
         //comptute the new mask
-        int[] zero = {0, 0, 0, 0};
+        byte[] zero = {0, 0, 0};
         for (int i=0; i<mask.rows(); i++) {
             for (int j=0; j<mask.cols(); j++) {
-                if (!((hue.get(i, j)[0] >= _hueLower) && (hue.get(i, j)[0] <= _hueUpper))) {
+                if (!((hue.get(i, j)[0] >= _hueLower) || (hue.get(i, j)[0] <= _hueUpper))) {
                     mask.put(i, j, zero);
                 }
             }

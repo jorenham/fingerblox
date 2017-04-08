@@ -54,6 +54,8 @@ class ImageProcessing {
         imageColor = rotateImage(imageColor);
         imageColor = cropFingerprint(imageColor);
         imageColor = skinDetection(imageColor);
+        return mat2Bitmap(imageColor, Imgproc.COLOR_BGR2RGBA);
+        /*
 
         Mat image = new Mat(imageColor.rows(), imageColor.cols(), CvType.CV_8UC1);
         Imgproc.cvtColor(imageColor, image, Imgproc.COLOR_BGR2GRAY);
@@ -75,6 +77,7 @@ class ImageProcessing {
         Mat skeleton_with_keypoints = detectFeatures(skeleton, currentSkinMaskEdges);
 
         return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
+        */
     }
 
     private Mat getSkinMaskEdges(Mat skinMask) {
@@ -131,6 +134,14 @@ class ImageProcessing {
     private Mat skinDetection(Mat src) {
         // define the upper and lower boundaries of the HSV pixel
         // intensities to be considered 'skin'
+        AdaptiveSkinDetector a = new AdaptiveSkinDetector();
+        Mat mask = new Mat();
+        a.run(src, mask);
+        Imgproc.cvtColor(mask, mask, Imgproc.COLOR_GRAY2BGR);
+        Mat dest = new Mat();
+        Core.multiply(src, mask, dest);
+        return src;
+        /*
         Scalar lower = new Scalar(0, 48, 80);
         Scalar upper = new Scalar(20, 255, 255);
 
@@ -166,6 +177,7 @@ class ImageProcessing {
         Imgproc.threshold(skin, currentSkinMask, 1, 255, Imgproc.THRESH_BINARY);
 
         return skin;
+        */
     }
 
     private Mat getSkeletonImage(Mat src, int rows, int cols) {
