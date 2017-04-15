@@ -31,7 +31,7 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 
 import static org.opencv.core.Core.NORM_HAMMING;
 
@@ -77,26 +77,81 @@ class ImageProcessing {
         Mat skeleton = getSkeletonImage(floated, rows, cols);
         skeleton = thinning(skeleton);
 
-        Mat currentSkinMaskEdges = getSkinMaskEdges(currentSkinMask);
-        Mat skeleton_with_keypoints = detectFeatures(skeleton, currentSkinMaskEdges);
+        Mat skeleton_with_keypoints = detectMinutiae(skeleton, 1);
 
         return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
     }
 
-    private Mat getSkinMaskEdges(Mat skinMask) {
-        // Retrieve edges using Canny method
-        Mat edges = new Mat(skinMask.rows(), skinMask.cols(), CvType.CV_8UC1);
-        Imgproc.Canny(skinMask, edges, 15, 150);
+    private Mat detectMinutiae(Mat skeleton, int border) {
+        HashSet<Minutiae> minutiaeSet = new HashSet<>();
+        for(int c = border; c<skeleton.cols()-border; c++){
+            for(int r = border; r<skeleton.rows()-border; r++) {
+                double point = skeleton.get(r, c)[0];
+                if (point != 0) {  // Not black
+                    int cn = 0;
+                    if (skeleton.get(r-1, c-1)[0] == 0) cn++;
+                    if (skeleton.get(r-1, c  )[0] == 0) cn++;
+                    if (skeleton.get(r-1, c+1)[0] == 0) cn++;
+                    if (skeleton.get(r  , c-1)[0] == 0) cn++;
+                    if (skeleton.get(r  , c+1)[0] == 0) cn++;
+                    if (skeleton.get(r+1, c-1)[0] == 0) cn++;
+                    if (skeleton.get(r+1, c  )[0] == 0) cn++;
+                    if (skeleton.get(r+1, c+1)[0] == 0) cn++;
+                    // cn /= 2;
 
-        // dilate the mask
-        final Size kernelSize = new Size(6, 6);
-        final Point anchor = new Point(-1, -1);
-        final int iterations = 1;
+                    if(cn == 1)
+                        minutiaeSet.add(new Minutiae(c, r, Minutiae.Type.RIDGEENDING));
+                    else if(cn == 3)
+                        minutiaeSet.add(new Minutiae(c, r, Minutiae.Type.BIFURCATION));
+                }
+            }
+        }
 
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, kernelSize);
-        Imgproc.dilate(edges, edges, kernel, anchor, iterations);
+        HashSet<Minutiae> filteredMinutiae = filterMinutiae(minutiaeSet);
+        Mat result = new Mat();
+        Imgproc.cvtColor(skeleton, result, Imgproc.COLOR_GRAY2RGB);
+        double[] red = {255, 0, 0};
+        double[] green = {0, 255, 0};
+        for (Minutiae m : filteredMinutiae) {
+            double [] color;
+            if (m.type == Minutiae.Type.BIFURCATION) color = green;
+            else color = red;
+            result.put(m.y, m.x  , color);
+            result.put(m.y, m.x-1, color);
+            result.put(m.y, m.x+1, color);
+            result.put(m.y-1, m.x  , color);
+            result.put(m.y+1, m.x  , color);
+        }
+        return result;
+    }
 
-        return edges;
+    private HashSet<Minutiae> filterMinutiae(HashSet<Minutiae> src) {
+        HashSet<Minutiae> ridgeening = new HashSet<>();
+        HashSet<Minutiae> filtered = new HashSet<>();
+
+        for (Minutiae m : src) {
+            if (m.type == Minutiae.Type.BIFURCATION) ridgeening.add(m);
+            else filtered.add(m);
+        }
+
+        double minSquaredDistance = 25;
+        HashSet<Minutiae> toBeRemoved = new HashSet<>();
+        HashSet<Minutiae> check = new HashSet<>(ridgeening);
+        for (Minutiae m : ridgeening) {
+            if (toBeRemoved.contains(m)) continue;
+            boolean ok = true;
+            check.remove(m);
+            for (Minutiae m2 : check) {
+                if (m.euclideanSquaredDistance(m2) < minSquaredDistance) {
+                    ok = false;
+                    toBeRemoved.add(m2);
+                }
+            }
+            if (ok) filtered.add(m);
+            else toBeRemoved.add(m);
+        }
+
+        return filtered;
     }
 
     @NonNull
@@ -167,9 +222,6 @@ class ImageProcessing {
         Mat skin = new Mat(skinMask.rows(), skinMask.cols(), CvType.CV_8U, new Scalar(3));
         Imgproc.GaussianBlur(skinMask, skinMask, ksize, 0);
         Core.bitwise_and(src, src, skin, skinMask);
-
-        currentSkinMask = new Mat(skinMask.rows(), skinMask.cols(), CvType.CV_8UC1);
-        Imgproc.threshold(skin, currentSkinMask, 1, 255, Imgproc.THRESH_BINARY);
 
         return skin;
     }
@@ -990,4 +1042,23 @@ class Thinning {
         return (x(6, i, j) || x(7, i, j) || !x(4, i, j)) && x(5, i, j);
     }
 
+}
+
+
+class Minutiae {
+    static enum Type {BIFURCATION, RIDGEENDING};
+    int x;
+    int y;
+    Type type;
+
+    public Minutiae(int x, int y, Type type) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+    }
+
+    public double euclideanSquaredDistance(Minutiae m) {
+        // omit sqrt for performance
+        return Math.pow(this.x - m.x, 2) + Math.pow(this.y - m.y, 2);
+    }
 }
