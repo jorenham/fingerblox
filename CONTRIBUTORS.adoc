@@ -1,0 +1,15 @@
+= Contributors
+
+== 2017
+
+[width="100%"]
+|=========================
+|*Name*  | *Role*  | *GitHub*   
+|Joren Hammudoglu  | Team Leader/Full-stack Developer  | https://github.com/jorenham[jorenham] 
+|Jamey Sparreboom  | Android Developer  | https://github.com/Roccy[Roccy]
+|Julian Faber  | Android Developer | https://github.com/julianfx[julianfx]
+|Shashank Rao | Android Developer | https://github.com/shashankpr[shashankpr] 
+|Johannes Rauhamaa  | Android Developer | https://github.com/jrauhamaa[jrauhamaa] 
+|Ioannis Petros Samiotis  | Android Developer/Technical Writer | https://github.com/Saminobi[Samiotis]  
+| Lucio Guerchi | Android Developer/Technical Writer | https://github.com/luHub[luHub] 
+|====================
