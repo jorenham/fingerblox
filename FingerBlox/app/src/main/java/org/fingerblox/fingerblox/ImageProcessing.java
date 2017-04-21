@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import org.opencv.BuildConfig;
 import org.opencv.android.Utils;
@@ -13,7 +12,6 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
@@ -22,7 +20,6 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
@@ -32,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-
-import static org.opencv.core.Core.NORM_HAMMING;
 
 class ImageProcessing {
     public static final String TAG = "ImageProcessing";
@@ -75,29 +70,36 @@ class ImageProcessing {
         equalized.convertTo(floated, CvType.CV_32FC1);
 
         Mat skeleton = getSkeletonImage(floated, rows, cols);
+        System.out.println("thinning");
         skeleton = thinning(skeleton);
+        System.out.println("thinning done");
 
         Mat skeleton_with_keypoints = detectMinutiae(skeleton, 1);
 
         return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
     }
 
+    private int neighbourCount(Mat skeleton, int row, int col) {
+        int cn = 0;
+        if (skeleton.get(row-1, col-1)[0] != 0) cn++;
+        if (skeleton.get(row-1, col  )[0] != 0) cn++;
+        if (skeleton.get(row-1, col+1)[0] != 0) cn++;
+        if (skeleton.get(row  , col-1)[0] != 0) cn++;
+        if (skeleton.get(row  , col+1)[0] != 0) cn++;
+        if (skeleton.get(row+1, col-1)[0] != 0) cn++;
+        if (skeleton.get(row+1, col  )[0] != 0) cn++;
+        if (skeleton.get(row+1, col+1)[0] != 0) cn++;
+        return cn;
+    }
+
     private Mat detectMinutiae(Mat skeleton, int border) {
         HashSet<Minutiae> minutiaeSet = new HashSet<>();
+        System.out.println("Detecting minutiae");
         for(int c = border; c<skeleton.cols()-border; c++){
             for(int r = border; r<skeleton.rows()-border; r++) {
                 double point = skeleton.get(r, c)[0];
                 if (point != 0) {  // Not black
-                    int cn = 0;
-                    if (skeleton.get(r-1, c-1)[0] == 0) cn++;
-                    if (skeleton.get(r-1, c  )[0] == 0) cn++;
-                    if (skeleton.get(r-1, c+1)[0] == 0) cn++;
-                    if (skeleton.get(r  , c-1)[0] == 0) cn++;
-                    if (skeleton.get(r  , c+1)[0] == 0) cn++;
-                    if (skeleton.get(r+1, c-1)[0] == 0) cn++;
-                    if (skeleton.get(r+1, c  )[0] == 0) cn++;
-                    if (skeleton.get(r+1, c+1)[0] == 0) cn++;
-                    // cn /= 2;
+                    int cn = neighbourCount(skeleton, r, c);
 
                     if(cn == 1)
                         minutiaeSet.add(new Minutiae(c, r, Minutiae.Type.RIDGEENDING));
@@ -107,8 +109,11 @@ class ImageProcessing {
             }
         }
 
+        System.out.println("filtering minutiae");
         HashSet<Minutiae> filteredMinutiae = filterMinutiae(minutiaeSet);
+        System.out.println("number of minutiae: " + filteredMinutiae.size());
         Mat result = new Mat();
+        System.out.println("Drawing minutiae");
         Imgproc.cvtColor(skeleton, result, Imgproc.COLOR_GRAY2RGB);
         double[] red = {255, 0, 0};
         double[] green = {0, 255, 0};
@@ -134,7 +139,7 @@ class ImageProcessing {
             else filtered.add(m);
         }
 
-        double minSquaredDistance = 25;
+        double minDistance = 10;
         HashSet<Minutiae> toBeRemoved = new HashSet<>();
         HashSet<Minutiae> check = new HashSet<>(ridgeening);
         for (Minutiae m : ridgeening) {
@@ -142,7 +147,7 @@ class ImageProcessing {
             boolean ok = true;
             check.remove(m);
             for (Minutiae m2 : check) {
-                if (m.euclideanSquaredDistance(m2) < minSquaredDistance) {
+                if (m.euclideanDistance(m2) < minDistance) {
                     ok = false;
                     toBeRemoved.add(m2);
                 }
@@ -929,14 +934,17 @@ class Thinning {
 
     Mat doJaniThinning(Mat Image) {
         B = new boolean[Image.rows()][Image.cols()];
+        // Inverse of B
         boolean [][] B_ = new boolean[Image.rows()][Image.cols()];
         for(int i=0; i<Image.rows(); i++)
             for(int j=0; j<Image.cols(); j++)
-                B[i][j] = (Image.get(i, j)[0] <= 10); //not a mistake, in matlab first invert and then morph
+                B[i][j] = (Image.get(i, j)[0] > 10); //not a mistake, in matlab first invert and then morph
 
         boolean[][] prevB = new boolean[Image.rows()][Image.cols()];
         final int maxIter = 1000;
         for(int iter = 0; iter < maxIter; iter++) {
+            System.out.println("Iter: " + iter);
+            // Assign B to prevB
             for (int i=0; i<Image.rows(); i++)
                 System.arraycopy(B[i], 0, prevB[i], 0, Image.cols());
 
@@ -945,6 +953,7 @@ class Thinning {
                 for (int j = 0; j < Image.cols(); j++)
                     B_[i][j] = !(B[i][j] && G1(i, j) && G2(i, j) && G3(i, j)) && B[i][j];
 
+            // Assign result of iteration #1 to B, so that iteration #2 will see the results
             for(int i=0; i<Image.rows(); i++)
                 System.arraycopy(B_[i], 0, B[i], 0, Image.cols());
 
@@ -954,7 +963,7 @@ class Thinning {
                 for (int j = 0; j < Image.cols(); j++)
                     B_[i][j] = !(B[i][j] && G1(i, j) && G2(i, j) && G3_(i, j)) && B[i][j];
 
-
+            // Assign result of Iteration #2 to B
             for(int i=0; i<Image.rows(); i++)
                 System.arraycopy(B_[i], 0, B[i], 0, Image.cols());
 
@@ -967,6 +976,7 @@ class Thinning {
             }
         }
 
+        removeFalseRidgeEndings(Image);
 
         Mat r = Mat.zeros(Image.size(), CvType.CV_8UC1);
 
@@ -979,6 +989,66 @@ class Thinning {
 
 
         return r;
+    }
+
+    private void removeFalseRidgeEndings(Mat Image) {
+        for(int i=0; i<Image.rows(); i++) {
+            for (int j = 0; j < Image.cols(); j++) {
+                if (neighbourCount(i, j) == 1) {
+                    // find the neighbour pixel
+                    int index = 0;
+                    for (int a=1; a<=8; a++) {
+                        if (x(a, i, j)) {
+                            index = a;
+                            break;
+                        }
+                    }
+                    int _i = i, _j = j;
+                    switch (index) {
+                        case 1:
+                            _i = i+1;
+                            break;
+                        case 2:
+                            _i = i+1;
+                            _j = j+1;
+                            break;
+                        case 3:
+                            _j = j+1;
+                            break;
+                        case 4:
+                            _i = i-1;
+                            _j = j+1;
+                            break;
+                        case 5:
+                            _i = i-1;
+                            break;
+                        case 6:
+                            _i = i-1;
+                            _j = j-1;
+                            break;
+                        case 7:
+                            _j = j-1;
+                            break;
+                        case 8:
+                            _i = i+1;
+                            _j = j-1;
+                            break;
+                    }
+
+                    if (neighbourCount(_i, _j) == 3) {
+                        B[i][j] = false;
+                    }
+                }
+            }
+        }
+    }
+
+    private int neighbourCount(int i, int j) {
+        int cn = 0;
+        for (int a=1; a<=8; a++)
+            if (x(a, i, j))
+                cn++;
+        return cn;
     }
 
     private boolean x(int a, int i, int j) {
@@ -1046,7 +1116,7 @@ class Thinning {
 
 
 class Minutiae {
-    static enum Type {BIFURCATION, RIDGEENDING};
+    enum Type {BIFURCATION, RIDGEENDING};
     int x;
     int y;
     Type type;
@@ -1057,8 +1127,7 @@ class Minutiae {
         this.type = type;
     }
 
-    public double euclideanSquaredDistance(Minutiae m) {
-        // omit sqrt for performance
-        return Math.pow(this.x - m.x, 2) + Math.pow(this.y - m.y, 2);
+    public double euclideanDistance(Minutiae m) {
+        return Math.sqrt(Math.pow(this.x - m.x, 2) + Math.pow(this.y - m.y, 2));
     }
 }
