@@ -1,8 +1,14 @@
 package org.fingerblox.fingerblox;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.media.MediaScannerConnection;
+import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -30,17 +36,29 @@ import org.opencv.core.Point;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 
 public class ImageDisplayActivity extends AppCompatActivity {
     public static final String TAG = "ImageDisplayActivity";
     public File fileDir;
-    public final String kpFileSuffix = "_keypoints";
-    public final String descFileSuffix = "_descriptors";
+    public final String kpFileSuffix = "_keypoints.json";
+    public final String descFileSuffix = "_descriptors.json";
+
+    /*
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+    */
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,18 +118,57 @@ public class ImageDisplayActivity extends AppCompatActivity {
     protected void saveFeatures(String fileName){
         boolean saveSuccess = true;
 
-        MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
-        Mat descriptors = ImageProcessing.getDescriptors();
+        // MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
+        // Mat descriptors = ImageProcessing.getDescriptors();
+        HashSet<Minutiae> minutiae = ImageProcessing.getMinutiae();
+        String minutiaeJSON = minutiaeToJSON(minutiae);
+        String descriptorsJSON = getDescriptorsJSON();
 
-        String keypointsJSON = keypointsToJSON(keypoints);
-        String descriptorsJSON = matToJSON(descriptors);
+        // String keypointsJSON = keypointsToJSON(keypoints);
+        // String descriptorsJSON = matToJSON(descriptors);
 
-        try{
+        // File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+
+        /*
+        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(
+                    this,
+                    PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE
+            );
+        }
+        */
+
+        try {
+            /*
+
+            FileOutputStream out = null;
+            try {
+                File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                File file = new File(dir, "blox.png");
+                out = new FileOutputStream(file.getPath());
+                ImageSingleton.image.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
+                // PNG is a lossless format, the compression factor (100) is ignored
+                MediaScannerConnection.scanFile(this, new String[] {file.toString()}, null, null);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (out != null) {
+                        out.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            */
             FileWriter fw;
-
             File keypointsFile = new File(fileDir, fileName+kpFileSuffix);
             fw = new FileWriter(keypointsFile);
-            fw.write(keypointsJSON);
+            fw.write(minutiaeJSON);
             fw.flush();
             fw.close();
 
@@ -190,10 +247,8 @@ public class ImageDisplayActivity extends AppCompatActivity {
         MatOfKeyPoint keypointsToMatch = jsonToKeypoints(loadedFeatures[0]);
         Mat descriptorsToMatch = jsonToMat(loadedFeatures[1]);
 
-        // Current keypoints: MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
-        // Current descriptors: Mat descriptors = ImageProcessing.getDescriptors();
-
-        //TODO: match current keypoints and descriptors with loaded ones
+        double matchRatio = ImageProcessing.matchFeatures(keypointsToMatch, descriptorsToMatch);
+        Log.i(TAG, String.format("MATCH RATIO OMG WOW: %s", matchRatio));
     }
 
     public String[] loadFiles(String fileName){
@@ -244,6 +299,27 @@ public class ImageDisplayActivity extends AppCompatActivity {
             obj.addProperty("angle", kp.angle);
             obj.addProperty("octave", kp.octave);
             obj.addProperty("response", kp.response);
+
+            jsonArr.add(obj);
+        }
+
+        return gson.toJson(jsonArr);
+    }
+
+    public String minutiaeToJSON(HashSet<Minutiae> minutiae){
+        Gson gson = new Gson();
+
+        JsonArray jsonArr = new JsonArray();
+
+        for(Minutiae m : minutiae){
+            JsonObject obj = new JsonObject();
+
+            obj.addProperty("x", m.x);
+            obj.addProperty("y", m.y);
+            if (m.type == Minutiae.Type.BIFURCATION)
+                obj.addProperty("type", "BIFURCATION");
+            else
+                obj.addProperty("type", "RIDGEENDING");
 
             jsonArr.add(obj);
         }
@@ -302,6 +378,20 @@ public class ImageDisplayActivity extends AppCompatActivity {
         String dataString = new String(Base64.encode(data, Base64.DEFAULT));
 
         obj.addProperty("data", dataString);
+
+        Gson gson = new Gson();
+
+        return gson.toJson(obj);
+    }
+
+    public static String getDescriptorsJSON(){
+        JsonObject obj = new JsonObject();
+
+        int cols = ImageSingleton.image.getWidth();
+        int rows = ImageSingleton.image.getHeight();
+
+        obj.addProperty("rows", rows);
+        obj.addProperty("cols", cols);
 
         Gson gson = new Gson();
 
