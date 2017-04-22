@@ -38,6 +38,8 @@ class ImageProcessing {
 
     private byte[] data;
 
+    private int paddingSize;
+
     ImageProcessing(byte[] data) {
         this.data = data;
     }
@@ -108,7 +110,7 @@ class ImageProcessing {
         }
 
         System.out.println("filtering minutiae");
-        HashSet<Minutiae> filteredMinutiae = filterMinutiae(minutiaeSet);
+        HashSet<Minutiae> filteredMinutiae = filterMinutiae(minutiaeSet, skeleton);
         System.out.println("number of minutiae: " + filteredMinutiae.size());
         Mat result = new Mat();
         System.out.println("Drawing minutiae");
@@ -147,14 +149,17 @@ class ImageProcessing {
         }
     }
 
-    private HashSet<Minutiae> filterMinutiae(HashSet<Minutiae> src) {
+    private HashSet<Minutiae> filterMinutiae(HashSet<Minutiae> src, Mat skeleton) {
+        Mat mask = snapShotMask(skeleton.rows(), skeleton.cols(), paddingSize + 5);
+
         HashSet<Minutiae> ridgeEnding = new HashSet<>();
         HashSet<Minutiae> bifurcation = new HashSet<>();
         HashSet<Minutiae> filtered = new HashSet<>();
-
         for (Minutiae m : src) {
-            if (m.type == Minutiae.Type.BIFURCATION) ridgeEnding.add(m);
-            else bifurcation.add(m);
+            if (mask.get(m.y, m.x)[0] > 0) {  // filter out borders
+                if (m.type == Minutiae.Type.BIFURCATION) ridgeEnding.add(m);
+                else bifurcation.add(m);
+            }
         }
 
         int minDistance = 5;
@@ -196,7 +201,7 @@ class ImageProcessing {
         return 1;
     }
 
-    public static Mat skinDetection(Mat src) {
+    public Mat skinDetection(Mat src) {
         // define the upper and lower boundaries of the HSV pixel
         // intensities to be considered 'skin'
         Scalar lower = new Scalar(0, 48, 80);
@@ -263,6 +268,7 @@ class ImageProcessing {
         Mat matRidgeFilter = new Mat(imgRows, imgCols, CvType.CV_32FC1);
         double filterSize = 1.9;
         int padding = ridgeFilter(matRidgeSegment, matRidgeOrientation, matFrequency, matRidgeFilter, filterSize, filterSize, medianFreq);
+        paddingSize = padding;
 
         // step 5: enhance image after ridge filter
         Mat matEnhanced = new Mat(imgRows, imgCols, CvType.CV_8UC1);
