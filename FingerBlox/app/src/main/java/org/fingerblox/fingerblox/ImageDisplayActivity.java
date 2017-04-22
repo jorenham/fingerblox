@@ -51,11 +51,13 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public final String kpFileSuffix = "_keypoints.json";
     public final String descFileSuffix = "_descriptors.json";
 
+    /*
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+    */
 
 
     @Override
@@ -127,6 +129,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
         // File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
 
+        /*
         int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
@@ -137,7 +140,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
                     REQUEST_EXTERNAL_STORAGE
             );
         }
-
+        */
 
         try {
             /*
