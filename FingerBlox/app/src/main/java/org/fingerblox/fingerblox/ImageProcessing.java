@@ -34,6 +34,7 @@ class ImageProcessing {
 
     private static MatOfKeyPoint keypointsField;
     private static Mat descriptorsField;
+    private static HashSet<Minutiae> minutiaeField;
 
     private byte[] data;
 
@@ -124,6 +125,7 @@ class ImageProcessing {
             result.put(m.y-1, m.x  , color);
             result.put(m.y+1, m.x  , color);
         }
+        minutiaeField = filteredMinutiae;
         return result;
     }
 
@@ -872,6 +874,10 @@ class ImageProcessing {
 
     public static MatOfKeyPoint getKeypoints(){
         return keypointsField;
+    }
+
+    public static HashSet<Minutiae> getMinutiae(){
+        return minutiaeField;
     }
 
     public static Mat getDescriptors(){
