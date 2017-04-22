@@ -127,19 +127,10 @@ class ImageProcessing {
         return result;
     }
 
-    private HashSet<Minutiae> filterMinutiae(HashSet<Minutiae> src) {
-        HashSet<Minutiae> ridgeening = new HashSet<>();
-        HashSet<Minutiae> filtered = new HashSet<>();
-
-        for (Minutiae m : src) {
-            if (m.type == Minutiae.Type.BIFURCATION) ridgeening.add(m);
-            else filtered.add(m);
-        }
-
-        double minDistance = 10;
+    private void removeMinutiae(int minDistance, HashSet<Minutiae> source, HashSet<Minutiae> target) {
         HashSet<Minutiae> toBeRemoved = new HashSet<>();
-        HashSet<Minutiae> check = new HashSet<>(ridgeening);
-        for (Minutiae m : ridgeening) {
+        HashSet<Minutiae> check = new HashSet<>(source);
+        for (Minutiae m : source) {
             if (toBeRemoved.contains(m)) continue;
             boolean ok = true;
             check.remove(m);
@@ -149,10 +140,24 @@ class ImageProcessing {
                     toBeRemoved.add(m2);
                 }
             }
-            if (ok) filtered.add(m);
+            if (ok) target.add(m);
             else toBeRemoved.add(m);
         }
+    }
 
+    private HashSet<Minutiae> filterMinutiae(HashSet<Minutiae> src) {
+        HashSet<Minutiae> ridgeEnding = new HashSet<>();
+        HashSet<Minutiae> bifurcation = new HashSet<>();
+        HashSet<Minutiae> filtered = new HashSet<>();
+
+        for (Minutiae m : src) {
+            if (m.type == Minutiae.Type.BIFURCATION) ridgeEnding.add(m);
+            else bifurcation.add(m);
+        }
+
+        int minDistance = 5;
+        removeMinutiae(minDistance, ridgeEnding, filtered);
+        removeMinutiae(minDistance, bifurcation, filtered);
         return filtered;
     }
 
@@ -982,66 +987,72 @@ class Thinning {
         Mat r = Mat.zeros(Image.size(), CvType.CV_8UC1);
 
         for(int i=0; i<Image.rows(); i++)
-            for(int j=0; j<Image.cols(); j++) {
-                if (B[i][j]) {
+            for(int j=0; j<Image.cols(); j++)
+                if (B[i][j])
                     r.put(i, j, 255);
-                }
-            }
-
-
         return r;
     }
 
+    // remove ridge endings shorter than minimumRidgeLength
     private void removeFalseRidgeEndings(Mat Image) {
-        for(int i=0; i<Image.rows(); i++) {
-            for (int j = 0; j < Image.cols(); j++) {
-                if (neighbourCount(i, j) == 1) {
-                    // find the neighbour pixel
-                    int index = 0;
-                    for (int a=1; a<=8; a++) {
-                        if (x(a, i, j)) {
-                            index = a;
-                            break;
-                        }
-                    }
-                    int _i = i, _j = j;
-                    switch (index) {
-                        case 1:
-                            _i = i+1;
-                            break;
-                        case 2:
-                            _i = i+1;
-                            _j = j+1;
-                            break;
-                        case 3:
-                            _j = j+1;
-                            break;
-                        case 4:
-                            _i = i-1;
-                            _j = j+1;
-                            break;
-                        case 5:
-                            _i = i-1;
-                            break;
-                        case 6:
-                            _i = i-1;
-                            _j = j-1;
-                            break;
-                        case 7:
-                            _j = j-1;
-                            break;
-                        case 8:
-                            _i = i+1;
-                            _j = j-1;
-                            break;
-                    }
+        int minimumRidgeLength = 5;
+        for(int i=0; i<Image.rows(); i++)
+            for (int j = 0; j < Image.cols(); j++)
+                if (B[i][j] && neighbourCount(i, j) == 1)
+                    removeEnding(i, j, minimumRidgeLength);
+    }
 
-                    if (neighbourCount(_i, _j) == 3) {
-                        B[i][j] = false;
-                    }
-                }
+    // follow ridge recursively and remove if shorter than minimumlength
+    private boolean removeEnding(int i, int j, int minimumLength) {
+        if (minimumLength < 0)
+            return true;
+        if (neighbourCount(i, j) > 1)
+            return false;
+        B[i][j] = false;
+        if (neighbourCount(i, j) == 0)
+            return false;
+        int index = 0;
+        for (int a=1; a<=8; a++) {
+            if (x(a, i, j)) {
+                index = a;
+                break;
             }
         }
+        int _i = i, _j = j;
+        switch (index) {
+            case 1:
+                _i = i+1;
+                break;
+            case 2:
+                _i = i+1;
+                _j = j+1;
+                break;
+            case 3:
+                _j = j+1;
+                break;
+            case 4:
+                _i = i-1;
+                _j = j+1;
+                break;
+            case 5:
+                _i = i-1;
+                break;
+            case 6:
+                _i = i-1;
+                _j = j-1;
+                break;
+            case 7:
+                _j = j-1;
+                break;
+            case 8:
+                _i = i+1;
+                _j = j-1;
+                break;
+        }
+        boolean ok = removeEnding(_i, _j, minimumLength-1);
+        if (ok)
+            B[i][j] = true;
+        return ok;
     }
 
     private int neighbourCount(int i, int j) {
