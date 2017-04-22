@@ -48,8 +48,8 @@ import java.util.List;
 public class ImageDisplayActivity extends AppCompatActivity {
     public static final String TAG = "ImageDisplayActivity";
     public File fileDir;
-    public final String kpFileSuffix = "_keypoints";
-    public final String descFileSuffix = "_descriptors";
+    public final String kpFileSuffix = "_keypoints.json";
+    public final String descFileSuffix = "_descriptors.json";
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
@@ -163,7 +163,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
             }
             */
             FileWriter fw;
-
             File keypointsFile = new File(fileDir, fileName+kpFileSuffix);
             fw = new FileWriter(keypointsFile);
             fw.write(minutiaeJSON);
