@@ -7,6 +7,8 @@ import android.hardware.Camera;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.opencv.BuildConfig;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -211,7 +213,10 @@ class ImageProcessing {
      * Match using the ratio test and RANSAC.
      * Returns the ratio matches and the total keypoints
      */
-    static double matchFeatures(MatOfKeyPoint keypoints, Mat descriptors) {
+    static double matchFeatures(JSONArray srcKeyPoints,
+                                JSONObject srcDescriptors,
+                                JSONArray targetKeyPoints,
+                                JSONObject targetDescriptors) {
         return 1;
     }
 

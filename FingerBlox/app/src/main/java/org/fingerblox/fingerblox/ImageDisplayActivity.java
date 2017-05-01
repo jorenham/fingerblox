@@ -29,6 +29,9 @@ import com.google.gson.JsonParser;
 
 import com.github.clans.fab.FloatingActionButton;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
@@ -50,6 +53,9 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public File fileDir;
     public final String kpFileSuffix = "_keypoints.json";
     public final String descFileSuffix = "_descriptors.json";
+
+    private JSONArray minutiaeJSON;
+    private JSONObject descriptorsJSON;
 
     /*
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -90,6 +96,10 @@ public class ImageDisplayActivity extends AppCompatActivity {
                 openMatchDialog();
             }
         });
+
+        HashSet<Minutiae> minutiae = ImageProcessing.getMinutiae();
+        minutiaeJSON = minutiaeToJSON(minutiae);
+        descriptorsJSON = getDescriptorsJSON();
     }
 
     public void openSaveDialog() {
@@ -120,9 +130,11 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
         // MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
         // Mat descriptors = ImageProcessing.getDescriptors();
+        /*
         HashSet<Minutiae> minutiae = ImageProcessing.getMinutiae();
         String minutiaeJSON = minutiaeToJSON(minutiae);
         String descriptorsJSON = getDescriptorsJSON();
+        */
 
         // String keypointsJSON = keypointsToJSON(keypoints);
         // String descriptorsJSON = matToJSON(descriptors);
@@ -168,13 +180,13 @@ public class ImageDisplayActivity extends AppCompatActivity {
             FileWriter fw;
             File keypointsFile = new File(fileDir, fileName+kpFileSuffix);
             fw = new FileWriter(keypointsFile);
-            fw.write(minutiaeJSON);
+            fw.write(minutiaeJSON.toString());
             fw.flush();
             fw.close();
 
             File descriptorsFile = new File(fileDir, fileName+descFileSuffix);
             fw = new FileWriter(descriptorsFile);
-            fw.write(descriptorsJSON);
+            fw.write(descriptorsJSON.toString());
             fw.flush();
             fw.close();
         } catch (Exception e){
@@ -244,11 +256,23 @@ public class ImageDisplayActivity extends AppCompatActivity {
         Log.d(TAG, "Keypoints: "+loadedFeatures[0]);
         Log.d(TAG, "Descriptors: "+loadedFeatures[1]);
 
-        MatOfKeyPoint keypointsToMatch = jsonToKeypoints(loadedFeatures[0]);
-        Mat descriptorsToMatch = jsonToMat(loadedFeatures[1]);
+        try {
+            JSONArray targetMinutiaeJSON = new JSONArray(loadedFeatures[0]);
+            JSONObject targetDescriptorJSON = new JSONObject(loadedFeatures[1]);
 
-        double matchRatio = ImageProcessing.matchFeatures(keypointsToMatch, descriptorsToMatch);
-        Log.i(TAG, String.format("MATCH RATIO OMG WOW: %s", matchRatio));
+            /*
+            MatOfKeyPoint keypointsToMatch = jsonToKeypoints(loadedFeatures[0]);
+            Mat descriptorsToMatch = jsonToMat(loadedFeatures[1]);
+
+            double matchRatio = ImageProcessing.matchFeatures(keypointsToMatch, descriptorsToMatch);
+            */
+
+            double matchRatio = ImageProcessing.matchFeatures(minutiaeJSON,
+                    descriptorsJSON, targetMinutiaeJSON, targetDescriptorJSON);
+            Log.i(TAG, String.format("MATCH RATIO OMG WOW: %s", matchRatio));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public String[] loadFiles(String fileName){
@@ -306,25 +330,26 @@ public class ImageDisplayActivity extends AppCompatActivity {
         return gson.toJson(jsonArr);
     }
 
-    public String minutiaeToJSON(HashSet<Minutiae> minutiae){
-        Gson gson = new Gson();
+    public JSONArray minutiaeToJSON(HashSet<Minutiae> minutiae){
 
-        JsonArray jsonArr = new JsonArray();
+        JSONArray jsonArr = new JSONArray();
 
         for(Minutiae m : minutiae){
-            JsonObject obj = new JsonObject();
-
-            obj.addProperty("x", m.x);
-            obj.addProperty("y", m.y);
-            if (m.type == Minutiae.Type.BIFURCATION)
-                obj.addProperty("type", "BIFURCATION");
-            else
-                obj.addProperty("type", "RIDGEENDING");
-
-            jsonArr.add(obj);
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put("x", m.x);
+                obj.put("y", m.y);
+                if (m.type == Minutiae.Type.BIFURCATION)
+                    obj.put("type", "BIFURCATION");
+                else
+                    obj.put("type", "RIDGEENDING");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            jsonArr.put(obj);
         }
 
-        return gson.toJson(jsonArr);
+        return jsonArr;
     }
 
     public static MatOfKeyPoint jsonToKeypoints(String json){
@@ -384,18 +409,20 @@ public class ImageDisplayActivity extends AppCompatActivity {
         return gson.toJson(obj);
     }
 
-    public static String getDescriptorsJSON(){
-        JsonObject obj = new JsonObject();
+    public static JSONObject getDescriptorsJSON(){
+        JSONObject obj = new JSONObject();
 
         int cols = ImageSingleton.image.getWidth();
         int rows = ImageSingleton.image.getHeight();
 
-        obj.addProperty("rows", rows);
-        obj.addProperty("cols", cols);
+        try {
+            obj.put("rows", rows);
+            obj.put("cols", cols);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-        Gson gson = new Gson();
-
-        return gson.toJson(obj);
+        return obj;
     }
 
     public static Mat jsonToMat(String json){
