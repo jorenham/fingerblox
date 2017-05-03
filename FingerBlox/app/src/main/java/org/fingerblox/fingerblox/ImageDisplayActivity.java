@@ -128,65 +128,24 @@ public class ImageDisplayActivity extends AppCompatActivity {
     protected void saveFeatures(String fileName){
         boolean saveSuccess = true;
 
-        // MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
-        // Mat descriptors = ImageProcessing.getDescriptors();
-        /*
-        HashSet<Minutiae> minutiae = ImageProcessing.getMinutiae();
-        String minutiaeJSON = minutiaeToJSON(minutiae);
-        String descriptorsJSON = getDescriptorsJSON();
-        */
+        MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
+        Mat descriptors = ImageProcessing.getDescriptors();
 
-        // String keypointsJSON = keypointsToJSON(keypoints);
-        // String descriptorsJSON = matToJSON(descriptors);
+        String keypointsJSON = keypointsToJSON(keypoints);
+        String descriptorsJSON = matToJSON(descriptors);
 
-        // File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-
-        /*
-        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
-            ActivityCompat.requestPermissions(
-                    this,
-                    PERMISSIONS_STORAGE,
-                    REQUEST_EXTERNAL_STORAGE
-            );
-        }
-        */
-
-        try {
-            /*
-
-            FileOutputStream out = null;
-            try {
-                File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File file = new File(dir, "blox.png");
-                out = new FileOutputStream(file.getPath());
-                ImageSingleton.image.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
-                // PNG is a lossless format, the compression factor (100) is ignored
-                MediaScannerConnection.scanFile(this, new String[] {file.toString()}, null, null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (out != null) {
-                        out.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            */
+        try{
             FileWriter fw;
+
             File keypointsFile = new File(fileDir, fileName+kpFileSuffix);
             fw = new FileWriter(keypointsFile);
-            fw.write(minutiaeJSON.toString());
+            fw.write(keypointsJSON);
             fw.flush();
             fw.close();
 
             File descriptorsFile = new File(fileDir, fileName+descFileSuffix);
             fw = new FileWriter(descriptorsFile);
-            fw.write(descriptorsJSON.toString());
+            fw.write(descriptorsJSON);
             fw.flush();
             fw.close();
         } catch (Exception e){
@@ -256,23 +215,12 @@ public class ImageDisplayActivity extends AppCompatActivity {
         Log.d(TAG, "Keypoints: "+loadedFeatures[0]);
         Log.d(TAG, "Descriptors: "+loadedFeatures[1]);
 
-        try {
-            JSONArray targetMinutiaeJSON = new JSONArray(loadedFeatures[0]);
-            JSONObject targetDescriptorJSON = new JSONObject(loadedFeatures[1]);
+        MatOfKeyPoint keypointsToMatch = jsonToKeypoints(loadedFeatures[0]);
+        Mat descriptorsToMatch = jsonToMat(loadedFeatures[1]);
 
-            /*
-            MatOfKeyPoint keypointsToMatch = jsonToKeypoints(loadedFeatures[0]);
-            Mat descriptorsToMatch = jsonToMat(loadedFeatures[1]);
+        double matchRatio = ImageProcessing.matchFeatures(keypointsToMatch, descriptorsToMatch);
 
-            double matchRatio = ImageProcessing.matchFeatures(keypointsToMatch, descriptorsToMatch);
-            */
-
-            double matchRatio = ImageProcessing.matchFeatures(minutiaeJSON,
-                    descriptorsJSON, targetMinutiaeJSON, targetDescriptorJSON);
-            Log.i(TAG, String.format("MATCH RATIO OMG WOW: %s", matchRatio));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        Log.i(TAG, String.format("MATCH RATIO OMG WOW: %s", matchRatio));
     }
 
     public String[] loadFiles(String fileName){
@@ -315,14 +263,11 @@ public class ImageDisplayActivity extends AppCompatActivity {
         KeyPoint[] kpsArray = kps.toArray();
         for(KeyPoint kp : kpsArray){
             JsonObject obj = new JsonObject();
-
             obj.addProperty("class_id", kp.class_id);
             obj.addProperty("x", kp.pt.x);
             obj.addProperty("y", kp.pt.y);
             obj.addProperty("size", kp.size);
             obj.addProperty("angle", kp.angle);
-            obj.addProperty("octave", kp.octave);
-            obj.addProperty("response", kp.response);
 
             jsonArr.add(obj);
         }
@@ -363,19 +308,14 @@ public class ImageDisplayActivity extends AppCompatActivity {
         KeyPoint[] kpArray = new KeyPoint[size];
 
         for(int i=0; i<size; i++){
-            KeyPoint kp = new KeyPoint();
-
             JsonObject obj = (JsonObject) jsonArr.get(i);
-
-            kp.pt = new Point(
-                        obj.get("x").getAsDouble(),
-                        obj.get("y").getAsDouble()
-                    );
-            kp.class_id = obj.get("class_id").getAsInt();
-            kp.size = obj.get("size").getAsFloat();
+            float x = obj.get("x").getAsFloat();
+            float y = obj.get("y").getAsFloat();
+            float kpSize = obj.get("size").getAsFloat();
+            int class_id = obj.get("class_id").getAsInt();
+            KeyPoint kp = new KeyPoint(x, y, kpSize);
+            kp.class_id = class_id;
             kp.angle = obj.get("angle").getAsFloat();
-            kp.octave = obj.get("octave").getAsInt();
-            kp.response = obj.get("response").getAsFloat();
 
             kpArray[i] = kp;
         }

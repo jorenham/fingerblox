@@ -134,7 +134,96 @@ class ImageProcessing {
             result.put(m.y+1, m.x  , color);
         }
         minutiaeField = filteredMinutiae;
+        MatOfKeyPoint keypoints = new MatOfKeyPoint();
+        keypoints.fromArray(minutiaeToKeyPoints(skeleton, filteredMinutiae));
+        keypointsField = keypoints;
+        DescriptorExtractor brief = DescriptorExtractor.create(DescriptorExtractor.ORB);
+        Mat descriptors = new Mat();
+        brief.compute(skeleton, keypoints, descriptors);
+        descriptorsField = descriptors;
         return result;
+    }
+
+    private KeyPoint[] minutiaeToKeyPoints(Mat skeleton, HashSet<Minutiae> minutiae) {
+        KeyPoint[] result = new KeyPoint[minutiae.size()];
+        int index = 0;
+        float size = 1;
+        for (Minutiae m : minutiae) {
+            KeyPoint k;
+            if (m.type == Minutiae.Type.BIFURCATION) {
+                k = new KeyPoint(m.x, m.y, size, -1);
+                k.class_id = Minutiae.BIFURCATION_LABEL;
+            } else {
+                float angle = getMinutiaeAngle(skeleton, m);
+                k = new KeyPoint(m.x, m.y, size, angle);
+                k.class_id = Minutiae.RIDGE_ENDING_LABEL;
+                System.out.println(k.angle);
+            }
+            result[index] = k;
+            index++;
+        }
+        return result;
+    }
+
+    private float getMinutiaeAngle(Mat skeleton, Minutiae m) {
+        Minutiae direction;
+        try {
+            direction = followRidge(skeleton, 5, m.x, m.y, m.x, m.y);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+        double length = Math.sqrt(Math.pow(direction.x-m.x, 2) + Math.pow(direction.y-m.y, 2));
+        double cosine = (direction.y-m.y) / length;
+        float angle = (float)Math.acos(cosine);
+        if (direction.x - m.x < 0)
+            angle = -angle + 2 * (float)Math.PI;
+        return angle;
+    }
+
+    private Minutiae followRidge(Mat skeleton, int length, int currentX, int currentY, int previousX, int previousY) throws Exception {
+        if (length == 0)
+            return new Minutiae(currentX, currentY, Minutiae.Type.RIDGEENDING);
+        if (currentY >= skeleton.rows() - 1 || currentY == 0 || currentX >= skeleton.cols() - 1 || currentX == 0)
+            throw new Exception("out of bounds");
+        int _x, _y;
+        _x = currentX - 1;
+        _y = currentY - 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX - 1;
+        _y = currentY;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX - 1;
+        _y = currentY + 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX;
+        _y = currentY - 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX;
+        _y = currentY + 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX + 1;
+        _y = currentY - 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX + 1;
+        _y = currentY;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX + 1;
+        _y = currentY + 1;
+        return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+    }
+
+    private boolean followRidgeCheck(Mat skeleton, int x, int y, int previousX, int previousY) {
+        if (x == previousX && y == previousY)
+            return false;
+        return skeleton.get(y, x)[0] != 0;
     }
 
     private void removeMinutiae(int minDistance, HashSet<Minutiae> source, HashSet<Minutiae> target) {
@@ -213,10 +302,7 @@ class ImageProcessing {
      * Match using the ratio test and RANSAC.
      * Returns the ratio matches and the total keypoints
      */
-    static double matchFeatures(JSONArray srcKeyPoints,
-                                JSONObject srcDescriptors,
-                                JSONArray targetKeyPoints,
-                                JSONObject targetDescriptors) {
+    static double matchFeatures(MatOfKeyPoint keyPoints, Mat descriptors) {
         return 1;
     }
 
@@ -1153,6 +1239,8 @@ class Thinning {
 
 
 class Minutiae {
+    static final int BIFURCATION_LABEL = 1;
+    static final int RIDGE_ENDING_LABEL = 0;
     enum Type {BIFURCATION, RIDGEENDING};
     int x;
     int y;
