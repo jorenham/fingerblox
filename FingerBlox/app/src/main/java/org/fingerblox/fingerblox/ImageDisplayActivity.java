@@ -54,9 +54,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public final String kpFileSuffix = "_keypoints.json";
     public final String descFileSuffix = "_descriptors.json";
 
-    private JSONArray minutiaeJSON;
-    private JSONObject descriptorsJSON;
-
     /*
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
@@ -96,10 +93,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
                 openMatchDialog();
             }
         });
-
-        HashSet<Minutiae> minutiae = ImageProcessing.getMinutiae();
-        minutiaeJSON = minutiaeToJSON(minutiae);
-        descriptorsJSON = getDescriptorsJSON();
     }
 
     public void openSaveDialog() {
@@ -278,28 +271,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
         return gson.toJson(jsonArr);
     }
 
-    public JSONArray minutiaeToJSON(HashSet<Minutiae> minutiae){
-
-        JSONArray jsonArr = new JSONArray();
-
-        for(Minutiae m : minutiae){
-            JSONObject obj = new JSONObject();
-            try {
-                obj.put("x", m.x);
-                obj.put("y", m.y);
-                if (m.type == Minutiae.Type.BIFURCATION)
-                    obj.put("type", "BIFURCATION");
-                else
-                    obj.put("type", "RIDGEENDING");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            jsonArr.put(obj);
-        }
-
-        return jsonArr;
-    }
-
     public static MatOfKeyPoint jsonToKeypoints(String json){
         MatOfKeyPoint result = new MatOfKeyPoint();
 
@@ -355,22 +326,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
         Gson gson = new Gson();
 
         return gson.toJson(obj);
-    }
-
-    public static JSONObject getDescriptorsJSON(){
-        JSONObject obj = new JSONObject();
-
-        int cols = ImageSingleton.image.getWidth();
-        int rows = ImageSingleton.image.getHeight();
-
-        try {
-            obj.put("rows", rows);
-            obj.put("cols", cols);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return obj;
     }
 
     public static Mat jsonToMat(String json){

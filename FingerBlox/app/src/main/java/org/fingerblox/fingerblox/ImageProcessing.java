@@ -43,7 +43,6 @@ class ImageProcessing {
 
     private static MatOfKeyPoint keypointsField;
     private static Mat descriptorsField;
-    private static HashSet<Minutiae> minutiaeField;
 
     private byte[] data;
     private Mat currentSkinMask;
@@ -138,7 +137,6 @@ class ImageProcessing {
             result.put(m.y-1, m.x  , color);
             result.put(m.y+1, m.x  , color);
         }
-        minutiaeField = filteredMinutiae;
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
         keypoints.fromArray(minutiaeToKeyPoints(skeleton, filteredMinutiae));
         keypointsField = keypoints;
@@ -312,8 +310,6 @@ class ImageProcessing {
         BFMatcher matcher = BFMatcher.create(NORM_HAMMING, true);
         MatOfDMatch matches = new MatOfDMatch();
         matcher.match(descriptorsField, descriptors, matches);
-        System.out.println("matches.size()");
-        System.out.println(matches.size());
         int maxDistance = 100;
         int matchCount = 0;
         for (DMatch m : matches.toArray()) {
@@ -996,10 +992,6 @@ class ImageProcessing {
 
     public static MatOfKeyPoint getKeypoints(){
         return keypointsField;
-    }
-
-    public static HashSet<Minutiae> getMinutiae(){
-        return minutiaeField;
     }
 
     public static Mat getDescriptors(){
