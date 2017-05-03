@@ -263,11 +263,14 @@ public class ImageDisplayActivity extends AppCompatActivity {
         KeyPoint[] kpsArray = kps.toArray();
         for(KeyPoint kp : kpsArray){
             JsonObject obj = new JsonObject();
+
             obj.addProperty("class_id", kp.class_id);
             obj.addProperty("x", kp.pt.x);
             obj.addProperty("y", kp.pt.y);
             obj.addProperty("size", kp.size);
             obj.addProperty("angle", kp.angle);
+            obj.addProperty("octave", kp.octave);
+            obj.addProperty("response", kp.response);
 
             jsonArr.add(obj);
         }
@@ -308,14 +311,19 @@ public class ImageDisplayActivity extends AppCompatActivity {
         KeyPoint[] kpArray = new KeyPoint[size];
 
         for(int i=0; i<size; i++){
+            KeyPoint kp = new KeyPoint();
+
             JsonObject obj = (JsonObject) jsonArr.get(i);
-            float x = obj.get("x").getAsFloat();
-            float y = obj.get("y").getAsFloat();
-            float kpSize = obj.get("size").getAsFloat();
-            int class_id = obj.get("class_id").getAsInt();
-            KeyPoint kp = new KeyPoint(x, y, kpSize);
-            kp.class_id = class_id;
+
+            kp.pt = new Point(
+                    obj.get("x").getAsDouble(),
+                    obj.get("y").getAsDouble()
+            );
+            kp.class_id = obj.get("class_id").getAsInt();
+            kp.size = obj.get("size").getAsFloat();
             kp.angle = obj.get("angle").getAsFloat();
+            kp.octave = obj.get("octave").getAsInt();
+            kp.response = obj.get("response").getAsFloat();
 
             kpArray[i] = kp;
         }

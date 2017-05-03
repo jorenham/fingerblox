@@ -13,8 +13,10 @@ import org.opencv.BuildConfig;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
+import org.opencv.core.DMatch;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
@@ -23,6 +25,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
@@ -32,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+
+import static org.opencv.core.Core.NORM_HAMMING;
 
 class ImageProcessing {
     public static final String TAG = "ImageProcessing";
@@ -150,16 +155,17 @@ class ImageProcessing {
         float size = 1;
         for (Minutiae m : minutiae) {
             KeyPoint k;
-            if (m.type == Minutiae.Type.BIFURCATION) {
-                k = new KeyPoint(m.x, m.y, size, -1);
-                k.class_id = Minutiae.BIFURCATION_LABEL;
+            float angle = -1;
+            float response = 1;
+            int octave = 1;
+            int class_id;
+            if (m.type == Minutiae.Type.RIDGEENDING) {
+                angle = getMinutiaeAngle(skeleton, m);
+                class_id = Minutiae.RIDGE_ENDING_LABEL;
             } else {
-                float angle = getMinutiaeAngle(skeleton, m);
-                k = new KeyPoint(m.x, m.y, size, angle);
-                k.class_id = Minutiae.RIDGE_ENDING_LABEL;
-                System.out.println(k.angle);
+                class_id = Minutiae.BIFURCATION_LABEL;
             }
-            result[index] = k;
+            result[index] = new KeyPoint(m.x, m.y, size, angle, response, octave, class_id);
             index++;
         }
         return result;
@@ -303,7 +309,18 @@ class ImageProcessing {
      * Returns the ratio matches and the total keypoints
      */
     static double matchFeatures(MatOfKeyPoint keyPoints, Mat descriptors) {
-        return 1;
+        BFMatcher matcher = BFMatcher.create(NORM_HAMMING, true);
+        MatOfDMatch matches = new MatOfDMatch();
+        matcher.match(descriptorsField, descriptors, matches);
+        System.out.println("matches.size()");
+        System.out.println(matches.size());
+        int maxDistance = 100;
+        int matchCount = 0;
+        for (DMatch m : matches.toArray()) {
+            if (m.distance <= maxDistance)
+                matchCount++;
+        }
+        return (float)matchCount / Math.max(keyPoints.rows(), keypointsField.rows());
     }
 
     public Mat skinDetection(Mat src) {
