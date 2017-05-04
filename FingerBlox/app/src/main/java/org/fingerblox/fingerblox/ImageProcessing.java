@@ -140,9 +140,9 @@ class ImageProcessing {
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
         keypoints.fromArray(minutiaeToKeyPoints(skeleton, filteredMinutiae));
         keypointsField = keypoints;
-        DescriptorExtractor brief = DescriptorExtractor.create(DescriptorExtractor.ORB);
+        DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
         Mat descriptors = new Mat();
-        brief.compute(skeleton, keypoints, descriptors);
+        extractor.compute(skeleton, keypoints, descriptors);
         descriptorsField = descriptors;
         return result;
     }
