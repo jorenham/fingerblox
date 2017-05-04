@@ -1,14 +1,8 @@
 package org.fingerblox.fingerblox;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.media.MediaScannerConnection;
-import android.os.Environment;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -16,10 +10,8 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -29,9 +21,6 @@ import com.google.gson.JsonParser;
 
 import com.github.clans.fab.FloatingActionButton;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
@@ -39,13 +28,7 @@ import org.opencv.core.Point;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 
 
 public class ImageDisplayActivity extends AppCompatActivity {
@@ -90,7 +73,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
         matchFeaturesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openMatchDialog();
+                findMatch();
             }
         });
     }
@@ -103,7 +86,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
         final EditText fileNameEditText = (EditText) dialogView.findViewById(R.id.filename_edit_text);
 
-        dialogBuilder.setMessage("Enter filename");
+        dialogBuilder.setMessage("Enter a name");
         dialogBuilder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 saveFeatures(fileNameEditText.getText().toString());
@@ -168,40 +151,25 @@ public class ImageDisplayActivity extends AppCompatActivity {
         }
     }
 
-    public void openMatchDialog() {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this, R.style.DialogTheme);
-        LayoutInflater inflater = this.getLayoutInflater();
-        final View dialogView = inflater.inflate(R.layout.match_dialog, null);
-        dialogBuilder.setView(dialogView);
-
-        final Spinner fileNameSpinner = (Spinner) dialogView.findViewById(R.id.filename_spinner);
-        List<String> spinnerArray =  new ArrayList<>();
+    public void findMatch() {
         SharedPreferences preferences = getSharedPreferences("PREFS", 0);
         String[] fileNameList = preferences.getString("fileNameList", "").split(" ");
-        spinnerArray.addAll(Arrays.asList(fileNameList));
 
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item, spinnerArray);
-
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        fileNameSpinner.setAdapter(spinnerAdapter);
-
-        dialogBuilder.setMessage("Select filename");
-        dialogBuilder.setPositiveButton("Match", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                matchFeatures(fileNameSpinner.getSelectedItem().toString());
+        double maxRatio = 0;
+        String bestFileName = null;
+        for (String fileName : fileNameList) {
+            double ratio = matchFeaturesFile(fileName);
+            if (ratio > maxRatio) {
+                maxRatio = ratio;
+                bestFileName = fileName;
             }
-        });
-        dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                //do nothing
-            }
-        });
-        AlertDialog saveDialog = dialogBuilder.create();
-        saveDialog.show();
+        }
+
+        Log.i(TAG, String.format("Match found: %s, ratio: %s", bestFileName, maxRatio));
+        // TODO display
     }
 
-    public void matchFeatures(String fileName){
+    private double matchFeaturesFile(String fileName){
         String[] loadedFeatures = loadFiles(fileName);
 
         Log.d(TAG, "Features loaded from file");
@@ -211,12 +179,10 @@ public class ImageDisplayActivity extends AppCompatActivity {
         MatOfKeyPoint keypointsToMatch = jsonToKeypoints(loadedFeatures[0]);
         Mat descriptorsToMatch = jsonToMat(loadedFeatures[1]);
 
-        double matchRatio = ImageProcessing.matchFeatures(keypointsToMatch, descriptorsToMatch);
-
-        Log.i(TAG, String.format("MATCH RATIO OMG WOW: %s", matchRatio));
+        return ImageProcessing.matchFeatures(keypointsToMatch, descriptorsToMatch);
     }
 
-    public String[] loadFiles(String fileName){
+    private String[] loadFiles(String fileName){
         String[] res = new String[2];
 
         try {
