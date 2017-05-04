@@ -29,6 +29,9 @@ import com.google.gson.JsonParser;
 
 import com.github.clans.fab.FloatingActionButton;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
@@ -118,57 +121,18 @@ public class ImageDisplayActivity extends AppCompatActivity {
     protected void saveFeatures(String fileName){
         boolean saveSuccess = true;
 
-        // MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
-        // Mat descriptors = ImageProcessing.getDescriptors();
-        HashSet<Minutiae> minutiae = ImageProcessing.getMinutiae();
-        String minutiaeJSON = minutiaeToJSON(minutiae);
-        String descriptorsJSON = getDescriptorsJSON();
+        MatOfKeyPoint keypoints = ImageProcessing.getKeypoints();
+        Mat descriptors = ImageProcessing.getDescriptors();
 
-        // String keypointsJSON = keypointsToJSON(keypoints);
-        // String descriptorsJSON = matToJSON(descriptors);
+        String keypointsJSON = keypointsToJSON(keypoints);
+        String descriptorsJSON = matToJSON(descriptors);
 
-        // File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-
-        /*
-        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
-            ActivityCompat.requestPermissions(
-                    this,
-                    PERMISSIONS_STORAGE,
-                    REQUEST_EXTERNAL_STORAGE
-            );
-        }
-        */
-
-        try {
-            /*
-
-            FileOutputStream out = null;
-            try {
-                File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-                File file = new File(dir, "blox.png");
-                out = new FileOutputStream(file.getPath());
-                ImageSingleton.image.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
-                // PNG is a lossless format, the compression factor (100) is ignored
-                MediaScannerConnection.scanFile(this, new String[] {file.toString()}, null, null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (out != null) {
-                        out.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            */
+        try{
             FileWriter fw;
+
             File keypointsFile = new File(fileDir, fileName+kpFileSuffix);
             fw = new FileWriter(keypointsFile);
-            fw.write(minutiaeJSON);
+            fw.write(keypointsJSON);
             fw.flush();
             fw.close();
 
@@ -248,6 +212,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
         Mat descriptorsToMatch = jsonToMat(loadedFeatures[1]);
 
         double matchRatio = ImageProcessing.matchFeatures(keypointsToMatch, descriptorsToMatch);
+
         Log.i(TAG, String.format("MATCH RATIO OMG WOW: %s", matchRatio));
     }
 
@@ -306,27 +271,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
         return gson.toJson(jsonArr);
     }
 
-    public String minutiaeToJSON(HashSet<Minutiae> minutiae){
-        Gson gson = new Gson();
-
-        JsonArray jsonArr = new JsonArray();
-
-        for(Minutiae m : minutiae){
-            JsonObject obj = new JsonObject();
-
-            obj.addProperty("x", m.x);
-            obj.addProperty("y", m.y);
-            if (m.type == Minutiae.Type.BIFURCATION)
-                obj.addProperty("type", "BIFURCATION");
-            else
-                obj.addProperty("type", "RIDGEENDING");
-
-            jsonArr.add(obj);
-        }
-
-        return gson.toJson(jsonArr);
-    }
-
     public static MatOfKeyPoint jsonToKeypoints(String json){
         MatOfKeyPoint result = new MatOfKeyPoint();
 
@@ -343,9 +287,9 @@ public class ImageDisplayActivity extends AppCompatActivity {
             JsonObject obj = (JsonObject) jsonArr.get(i);
 
             kp.pt = new Point(
-                        obj.get("x").getAsDouble(),
-                        obj.get("y").getAsDouble()
-                    );
+                    obj.get("x").getAsDouble(),
+                    obj.get("y").getAsDouble()
+            );
             kp.class_id = obj.get("class_id").getAsInt();
             kp.size = obj.get("size").getAsFloat();
             kp.angle = obj.get("angle").getAsFloat();
@@ -378,20 +322,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
         String dataString = new String(Base64.encode(data, Base64.DEFAULT));
 
         obj.addProperty("data", dataString);
-
-        Gson gson = new Gson();
-
-        return gson.toJson(obj);
-    }
-
-    public static String getDescriptorsJSON(){
-        JsonObject obj = new JsonObject();
-
-        int cols = ImageSingleton.image.getWidth();
-        int rows = ImageSingleton.image.getHeight();
-
-        obj.addProperty("rows", rows);
-        obj.addProperty("cols", cols);
 
         Gson gson = new Gson();
 

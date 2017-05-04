@@ -7,12 +7,16 @@ import android.hardware.Camera;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.opencv.BuildConfig;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
+import org.opencv.core.DMatch;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
@@ -21,6 +25,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
@@ -31,12 +36,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 
+import static org.opencv.core.Core.NORM_HAMMING;
+
 class ImageProcessing {
     public static final String TAG = "ImageProcessing";
 
     private static MatOfKeyPoint keypointsField;
     private static Mat descriptorsField;
-    private static HashSet<Minutiae> minutiaeField;
 
     private byte[] data;
     private Mat currentSkinMask;
@@ -131,8 +137,97 @@ class ImageProcessing {
             result.put(m.y-1, m.x  , color);
             result.put(m.y+1, m.x  , color);
         }
-        minutiaeField = filteredMinutiae;
+        MatOfKeyPoint keypoints = new MatOfKeyPoint();
+        keypoints.fromArray(minutiaeToKeyPoints(skeleton, filteredMinutiae));
+        keypointsField = keypoints;
+        DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
+        Mat descriptors = new Mat();
+        extractor.compute(skeleton, keypoints, descriptors);
+        descriptorsField = descriptors;
         return result;
+    }
+
+    private KeyPoint[] minutiaeToKeyPoints(Mat skeleton, HashSet<Minutiae> minutiae) {
+        KeyPoint[] result = new KeyPoint[minutiae.size()];
+        int index = 0;
+        float size = 1;
+        for (Minutiae m : minutiae) {
+            KeyPoint k;
+            float angle = -1;
+            float response = 1;
+            int octave = 1;
+            int class_id;
+            if (m.type == Minutiae.Type.RIDGEENDING) {
+                angle = getMinutiaeAngle(skeleton, m);
+                class_id = Minutiae.RIDGE_ENDING_LABEL;
+            } else {
+                class_id = Minutiae.BIFURCATION_LABEL;
+            }
+            result[index] = new KeyPoint(m.x, m.y, size, angle, response, octave, class_id);
+            index++;
+        }
+        return result;
+    }
+
+    private float getMinutiaeAngle(Mat skeleton, Minutiae m) {
+        Minutiae direction;
+        try {
+            direction = followRidge(skeleton, 5, m.x, m.y, m.x, m.y);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+        double length = Math.sqrt(Math.pow(direction.x-m.x, 2) + Math.pow(direction.y-m.y, 2));
+        double cosine = (direction.y-m.y) / length;
+        float angle = (float)Math.acos(cosine);
+        if (direction.x - m.x < 0)
+            angle = -angle + 2 * (float)Math.PI;
+        return angle;
+    }
+
+    private Minutiae followRidge(Mat skeleton, int length, int currentX, int currentY, int previousX, int previousY) throws Exception {
+        if (length == 0)
+            return new Minutiae(currentX, currentY, Minutiae.Type.RIDGEENDING);
+        if (currentY >= skeleton.rows() - 1 || currentY == 0 || currentX >= skeleton.cols() - 1 || currentX == 0)
+            throw new Exception("out of bounds");
+        int _x, _y;
+        _x = currentX - 1;
+        _y = currentY - 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX - 1;
+        _y = currentY;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX - 1;
+        _y = currentY + 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX;
+        _y = currentY - 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX;
+        _y = currentY + 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX + 1;
+        _y = currentY - 1;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX + 1;
+        _y = currentY;
+        if (followRidgeCheck(skeleton, _x, _y, previousX, previousY))
+            return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+        _x = currentX + 1;
+        _y = currentY + 1;
+        return followRidge(skeleton, length-1, _x, _y, currentX, currentY);
+    }
+
+    private boolean followRidgeCheck(Mat skeleton, int x, int y, int previousX, int previousY) {
+        if (x == previousX && y == previousY)
+            return false;
+        return skeleton.get(y, x)[0] != 0;
     }
 
     private void removeMinutiae(int minDistance, HashSet<Minutiae> source, HashSet<Minutiae> target) {
@@ -211,8 +306,17 @@ class ImageProcessing {
      * Match using the ratio test and RANSAC.
      * Returns the ratio matches and the total keypoints
      */
-    static double matchFeatures(MatOfKeyPoint keypoints, Mat descriptors) {
-        return 1;
+    static double matchFeatures(MatOfKeyPoint keyPoints, Mat descriptors) {
+        BFMatcher matcher = BFMatcher.create(NORM_HAMMING, true);
+        MatOfDMatch matches = new MatOfDMatch();
+        matcher.match(descriptorsField, descriptors, matches);
+        int maxDistance = 100;
+        int matchCount = 0;
+        for (DMatch m : matches.toArray()) {
+            if (m.distance <= maxDistance)
+                matchCount++;
+        }
+        return (float)matchCount / Math.max(keyPoints.rows(), keypointsField.rows());
     }
 
     public Mat skinDetection(Mat src) {
@@ -890,10 +994,6 @@ class ImageProcessing {
         return keypointsField;
     }
 
-    public static HashSet<Minutiae> getMinutiae(){
-        return minutiaeField;
-    }
-
     public static Mat getDescriptors(){
         return descriptorsField;
     }
@@ -1148,6 +1248,8 @@ class Thinning {
 
 
 class Minutiae {
+    static final int BIFURCATION_LABEL = 1;
+    static final int RIDGE_ENDING_LABEL = 0;
     enum Type {BIFURCATION, RIDGEENDING};
     int x;
     int y;
