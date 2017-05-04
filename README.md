@@ -1,6 +1,6 @@
 # FingerBlox
 
-Take a picture of your finger to safely authenticate **anywhere**! Saves your fingerprint securely on the tamper-proof blockchain.
+Take a picture of your finger to safely authenticate!
 
 Done as a project for the [Delft University of Technology](http://www.tudelft.nl/en/).
 
@@ -15,9 +15,9 @@ Features
 - [x] Extract fingerprint skeleton from picture
 - [x] Real-time preview of part of the fingerprint processing pipeline
 - [x] Register fingerprint
+- [x] Fingerprint authentication
 - [ ] (in progress) Display intermediate processing steps during fingerprint processing
-- [ ] (in progress) Fingerprint authentication
-- [ ] Integrate the blockchain
+- [ ] (in progress) Empirical evaluation
 
 Project Requirements
 -----------------------
