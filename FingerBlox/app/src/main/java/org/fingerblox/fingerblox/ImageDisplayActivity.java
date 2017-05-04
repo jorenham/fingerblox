@@ -8,10 +8,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -165,8 +167,15 @@ public class ImageDisplayActivity extends AppCompatActivity {
             }
         }
 
-        Log.i(TAG, String.format("Match found: %s, ratio: %s", bestFileName, maxRatio));
-        // TODO display
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Match found");
+        builder.setMessage(String.format("%s: %s%%", bestFileName, (int) (maxRatio * 100)));
+        builder.setPositiveButton("OK", null);
+        AlertDialog dialog = builder.show();
+
+        // Must call show() prior to fetching text view
+        TextView messageView = (TextView)dialog.findViewById(android.R.id.message);
+        messageView.setGravity(Gravity.CENTER);
     }
 
     private double matchFeaturesFile(String fileName){

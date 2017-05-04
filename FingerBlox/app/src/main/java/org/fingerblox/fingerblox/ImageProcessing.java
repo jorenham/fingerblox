@@ -3,12 +3,9 @@ package org.fingerblox.fingerblox;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.hardware.Camera;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.opencv.BuildConfig;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -45,7 +42,6 @@ class ImageProcessing {
     private static Mat descriptorsField;
 
     private byte[] data;
-    private Mat currentSkinMask;
 
     private int paddingSize;
 
@@ -430,11 +426,6 @@ class ImageProcessing {
         Utils.bitmapToMat(bmp, BGRImage);
 
         return BGRImage;
-    }
-
-    @NonNull
-    private Mat emptyMat(int width, int height) {
-        return emptyMat(width, height, 1);
     }
 
     @NonNull
@@ -1069,7 +1060,6 @@ class Thinning {
         boolean[][] prevB = new boolean[Image.rows()][Image.cols()];
         final int maxIter = 1000;
         for(int iter = 0; iter < maxIter; iter++) {
-            System.out.println("Iter: " + iter);
             // Assign B to prevB
             for (int i=0; i<Image.rows(); i++)
                 System.arraycopy(B[i], 0, prevB[i], 0, Image.cols());
