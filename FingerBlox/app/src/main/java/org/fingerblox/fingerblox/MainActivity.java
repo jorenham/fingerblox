@@ -202,6 +202,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         stepViewContainer = (LinearLayout) findViewById(R.id.progress_indicator_container);
         stepView = (VerticalStepView) findViewById(R.id.progress_indicator);
 
+        initializeStepView();
+    }
+
+    private void initializeStepView() {
         List<String> steps = new ArrayList<>();
         steps.add("Skin detection");
         steps.add("Histogram equalisation");
@@ -217,9 +221,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 .setStepsViewIndicatorUnCompletedLineColor(ContextCompat.getColor(this, R.color.uncompleted_text_color))
                 .setStepViewComplectedTextColor(ContextCompat.getColor(this, android.R.color.white))
                 .setStepViewUnComplectedTextColor(ContextCompat.getColor(this, R.color.uncompleted_text_color))
-                .setStepsViewIndicatorCompleteIcon(ContextCompat.getDrawable(this, R.drawable.complted))
-                .setStepsViewIndicatorDefaultIcon(ContextCompat.getDrawable(this, R.drawable.default_icon))
-                .setStepsViewIndicatorAttentionIcon(ContextCompat.getDrawable(this, R.drawable.attention));
+
+                .setStepsViewIndicatorCompleteIcon(ContextCompat.getDrawable(this, R.drawable.ic_check_circle_white_24dp))
+                .setStepsViewIndicatorDefaultIcon(ContextCompat.getDrawable(this, R.drawable.ic_radio_button_checked_white_24dp))
+                .setStepsViewIndicatorAttentionIcon(ContextCompat.getDrawable(this, R.drawable.ic_play_circle_filled_white_24dp));
     }
 
     protected boolean updateStaticTextViews() {
