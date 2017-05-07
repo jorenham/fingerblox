@@ -12,6 +12,7 @@ import android.hardware.Camera.PictureCallback;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -20,6 +21,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import com.baoyachi.stepview.VerticalStepView;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
@@ -29,6 +31,8 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -90,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     takePictureButton.setIndeterminate(!enable);
                     takePictureButton.setEnabled(enable);
                     settingsButton.setVisibility(enable ? View.VISIBLE : View.INVISIBLE);
+                    stepView.setVisibility(enable ? View.INVISIBLE : View.VISIBLE);
                 }
 
                 @Override
@@ -101,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 @Override
                 protected Bitmap doInBackground(byte[]... params) {
                     byte[] imageData = params[0];
-                    ImageProcessing p = new ImageProcessing(imageData);
+                    ImageProcessing p = new ImageProcessing(imageData, MainActivity.this, stepView);
                     return p.getProcessedImage();
                 }
 
@@ -117,6 +122,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             imProcessTask.execute(data);
         }
     };
+    private VerticalStepView stepView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -190,6 +196,26 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         updateStaticTextViews();
 
+        stepView = (VerticalStepView) findViewById(R.id.progress_indicator);
+
+        List<String> steps = new ArrayList<>();
+        steps.add("Skin detection");
+        steps.add("Histogram equalisation");
+        steps.add("Fingerprint skeletization");
+        steps.add("Ridge thinning");
+        steps.add("Minutiea extraction");
+
+        stepView.setStepsViewIndicatorComplectingPosition(0)
+                .reverseDraw(false)
+                .setStepViewTexts(steps)
+                .setLinePaddingProportion(0.85f)
+                .setStepsViewIndicatorCompletedLineColor(ContextCompat.getColor(this, android.R.color.white))
+                .setStepsViewIndicatorUnCompletedLineColor(ContextCompat.getColor(this, R.color.uncompleted_text_color))
+                .setStepViewComplectedTextColor(ContextCompat.getColor(this, android.R.color.white))
+                .setStepViewUnComplectedTextColor(ContextCompat.getColor(this, R.color.uncompleted_text_color))
+                .setStepsViewIndicatorCompleteIcon(ContextCompat.getDrawable(this, R.drawable.complted))
+                .setStepsViewIndicatorDefaultIcon(ContextCompat.getDrawable(this, R.drawable.default_icon))
+                .setStepsViewIndicatorAttentionIcon(ContextCompat.getDrawable(this, R.drawable.attention));
     }
 
     protected boolean updateStaticTextViews() {

@@ -93,6 +93,7 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:layout_margin="8dp"
+        android:visibility="visible"
         app:fab_showShadow="true"
         app:fab_shadowColor="#66000000"
         app:fab_shadowRadius="4dp"
@@ -173,4 +174,10 @@
         app:fab_progress_backgroundColor="#4D000000"
         app:fab_progress_indeterminate="false"
         app:fab_progress_showBackground="true" />
+
+    <com.baoyachi.stepview.VerticalStepView
+        android:id="@+id/progress_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:visibility="invisible" />
 </RelativeLayout>

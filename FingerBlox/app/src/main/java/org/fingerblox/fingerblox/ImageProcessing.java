@@ -4,7 +4,10 @@ package org.fingerblox.fingerblox;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+
+import com.baoyachi.stepview.VerticalStepView;
 
 import org.opencv.BuildConfig;
 import org.opencv.android.Utils;
@@ -45,8 +48,15 @@ class ImageProcessing {
 
     private int paddingSize;
 
-    ImageProcessing(byte[] data) {
+    private AppCompatActivity mainActivity;
+    private VerticalStepView stepView;
+
+    private int progressStep;
+
+    ImageProcessing(byte[] data, AppCompatActivity mainActivity, VerticalStepView stepView) {
         this.data = data;
+        this.mainActivity = mainActivity;
+        this.stepView = stepView;
     }
 
     /*
@@ -54,12 +64,15 @@ class ImageProcessing {
      * https://github.com/noureldien/FingerprintRecognition/blob/master/Java/src/com/fingerprintrecognition/ProcessActivity.java
      */
     Bitmap getProcessedImage() {
+        this.progressStep = 0;
 
         Mat imageColor = bytesToMat(data);
 
         imageColor = rotateImage(imageColor);
         imageColor = cropFingerprint(imageColor);
         imageColor = skinDetection(imageColor);
+
+        incrementProgress();
 
         Mat image = new Mat(imageColor.rows(), imageColor.cols(), CvType.CV_8UC1);
         Imgproc.cvtColor(imageColor, image, Imgproc.COLOR_BGR2GRAY);
@@ -71,18 +84,32 @@ class ImageProcessing {
         Mat equalized = new Mat(rows, cols, CvType.CV_32FC1);
         Imgproc.equalizeHist(image, equalized);
 
+        incrementProgress();
+
         // convert to float, very important
         Mat floated = new Mat(rows, cols, CvType.CV_32FC1);
         equalized.convertTo(floated, CvType.CV_32FC1);
 
         Mat skeleton = getSkeletonImage(floated, rows, cols);
-        System.out.println("thinning");
+        incrementProgress();
+
         skeleton = thinning(skeleton);
-        System.out.println("thinning done");
+        incrementProgress();
 
         Mat skeleton_with_keypoints = detectMinutiae(skeleton, 1);
+        incrementProgress();
 
         return mat2Bitmap(skeleton_with_keypoints, Imgproc.COLOR_RGB2RGBA);
+    }
+
+    private void incrementProgress() {
+        mainActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                progressStep += 1;
+                stepView.setStepsViewIndicatorComplectingPosition(progressStep);
+            }
+        });
     }
 
     private int neighbourCount(Mat skeleton, int row, int col) {
