@@ -19,6 +19,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.baoyachi.stepview.VerticalStepView;
@@ -62,6 +63,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private FloatingActionButton fixedFocusButton;
     private FloatingActionButton takePictureButton;
 
+    private LinearLayout stepViewContainer;
+    private VerticalStepView stepView;
+
     static {
         if (!OpenCVLoader.initDebug()) {
             Log.e(TAG, "Failed to load OpenCV");
@@ -94,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     takePictureButton.setIndeterminate(!enable);
                     takePictureButton.setEnabled(enable);
                     settingsButton.setVisibility(enable ? View.VISIBLE : View.INVISIBLE);
-                    stepView.setVisibility(enable ? View.INVISIBLE : View.VISIBLE);
+                    stepViewContainer.setVisibility(enable ? View.INVISIBLE : View.VISIBLE);
                 }
 
                 @Override
@@ -122,7 +126,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             imProcessTask.execute(data);
         }
     };
-    private VerticalStepView stepView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -196,6 +199,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         updateStaticTextViews();
 
+        stepViewContainer = (LinearLayout) findViewById(R.id.progress_indicator_container);
         stepView = (VerticalStepView) findViewById(R.id.progress_indicator);
 
         List<String> steps = new ArrayList<>();
