@@ -211,7 +211,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         steps.add("Histogram equalisation");
         steps.add("Fingerprint skeletization");
         steps.add("Ridge thinning");
-        steps.add("Minutiea extraction");
+        steps.add("Minutiae extraction");
 
         stepView.setStepsViewIndicatorComplectingPosition(0)
                 .reverseDraw(false)
