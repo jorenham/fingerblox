@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 int visibility = viewDeviceInfo ? View.VISIBLE : View.INVISIBLE;
                 findViewById(R.id.layout_info).setVisibility(visibility);
                 infoToggleButton.setLabelText(viewDeviceInfo ? "Hide device info" : "Show device info");
-                viewDeviceInfo = !viewDeviceInfo;
+                viewDeviceInfo = visibility == View.VISIBLE;
             }
         });
 
