@@ -31,6 +31,10 @@ import org.opencv.core.Point;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 
 public class ImageDisplayActivity extends AppCompatActivity {
@@ -157,19 +161,43 @@ public class ImageDisplayActivity extends AppCompatActivity {
         SharedPreferences preferences = getSharedPreferences("PREFS", 0);
         String[] fileNameList = preferences.getString("fileNameList", "").split(" ");
 
-        double maxRatio = 0;
-        String bestFileName = null;
-        for (String fileName : fileNameList) {
-            double ratio = matchFeaturesFile(fileName);
-            if (ratio > maxRatio) {
-                maxRatio = ratio;
-                bestFileName = fileName;
+        class Match {
+            public String filename;
+            public double matchRatio;
+
+            public Match(String filename, double matchRatio) {
+                this.filename = filename;
+                this.matchRatio = matchRatio;
             }
         }
 
+        List<Match> matches = new ArrayList<>();
+
+        for (String fileName : fileNameList) {
+            double ratio = matchFeaturesFile(fileName);
+            matches.add(new Match(fileName, ratio));
+        }
+
+        Collections.sort(matches, new Comparator<Match>() {
+            @Override
+            public int compare(Match x, Match y) {
+                return (int) Math.signum(y.matchRatio - x.matchRatio);
+            }
+        });
+
+        int maxMatches = 10;
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Match found");
-        builder.setMessage(String.format("%s: %s%%", bestFileName, (int) (maxRatio * 100)));
+        builder.setTitle("Best matches:");
+        String message = "";
+        for (int i=0; i<Math.min(maxMatches, matches.size()); i++) {
+            Match m = matches.get(i);
+            message += String.format("%s: %s%%\n", m.filename, (int) (m.matchRatio * 100));
+        }
+        if (matches.size() == 0) {
+            message = "No fingerprints have been saved yet";
+        }
+        builder.setMessage(message);
         builder.setPositiveButton("OK", null);
         AlertDialog dialog = builder.show();
 
