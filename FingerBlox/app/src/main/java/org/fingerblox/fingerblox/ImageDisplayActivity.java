@@ -8,11 +8,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +33,7 @@ import org.opencv.core.Point;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.util.ArrayList;
 
 
 public class ImageDisplayActivity extends AppCompatActivity {
@@ -156,26 +159,37 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public void findMatch() {
         SharedPreferences preferences = getSharedPreferences("PREFS", 0);
         String[] fileNameList = preferences.getString("fileNameList", "").split(" ");
+        ArrayList<Pair<String, Integer>> matches = new ArrayList<>();
 
-        double maxRatio = 0;
-        String bestFileName = null;
+        //double maxRatio = 0;
+        //String bestFileName = null;
         for (String fileName : fileNameList) {
             double ratio = matchFeaturesFile(fileName);
-            if (ratio > maxRatio) {
-                maxRatio = ratio;
-                bestFileName = fileName;
-            }
+//            if (ratio > maxRatio) {
+//                maxRatio = ratio;
+//                bestFileName = fileName;
+//            }
+            matches.add(new Pair<>(fileName,(int) (ratio * 100)));
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Match found");
-        builder.setMessage(String.format("%s: %s%%", bestFileName, (int) (maxRatio * 100)));
+        //builder.setMessage(String.format("%s: %s%%", bestFileName, (int) (maxRatio * 100)));
         builder.setPositiveButton("OK", null);
+
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.match_dialog, null);
+
+        builder.setView(dialogView);
         AlertDialog dialog = builder.show();
 
+        ListView matchListView = (ListView) dialog.findViewById(R.id.dialog_listview);
+        MatchAdapter matchAdapter = new MatchAdapter(getApplicationContext(), R.layout.match_row_item, matches);
+        matchListView.setAdapter(matchAdapter);
+
         // Must call show() prior to fetching text view
-        TextView messageView = (TextView)dialog.findViewById(android.R.id.message);
-        messageView.setGravity(Gravity.CENTER);
+        //TextView messageView = (TextView)dialog.findViewById(android.R.id.message);
+        //messageView.setGravity(Gravity.CENTER);
     }
 
     private double matchFeaturesFile(String fileName){
