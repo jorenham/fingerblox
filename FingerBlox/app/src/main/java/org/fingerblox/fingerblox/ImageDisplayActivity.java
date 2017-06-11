@@ -159,37 +159,35 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public void findMatch() {
         SharedPreferences preferences = getSharedPreferences("PREFS", 0);
         String[] fileNameList = preferences.getString("fileNameList", "").split(" ");
-        ArrayList<Pair<String, Integer>> matches = new ArrayList<>();
-
-        //double maxRatio = 0;
-        //String bestFileName = null;
-        for (String fileName : fileNameList) {
-            double ratio = matchFeaturesFile(fileName);
-//            if (ratio > maxRatio) {
-//                maxRatio = ratio;
-//                bestFileName = fileName;
-//            }
-            matches.add(new Pair<>(fileName,(int) (ratio * 100)));
-        }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Match found");
-        //builder.setMessage(String.format("%s: %s%%", bestFileName, (int) (maxRatio * 100)));
-        builder.setPositiveButton("OK", null);
 
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.match_dialog, null);
+        if(fileNameList.length > 0 && !(fileNameList.length == 1 && fileNameList[0].equals(""))) {
+            ArrayList<Pair<String, Integer>> matches = new ArrayList<>();
 
-        builder.setView(dialogView);
-        AlertDialog dialog = builder.show();
+            for (String fileName : fileNameList) {
+                double ratio = matchFeaturesFile(fileName);
+                matches.add(new Pair<>(fileName,(int) (ratio * 100)));
+            }
 
-        ListView matchListView = (ListView) dialog.findViewById(R.id.dialog_listview);
-        MatchAdapter matchAdapter = new MatchAdapter(getApplicationContext(), R.layout.match_row_item, matches);
-        matchListView.setAdapter(matchAdapter);
+            builder.setTitle("Match found");
+            builder.setPositiveButton("OK", null);
 
-        // Must call show() prior to fetching text view
-        //TextView messageView = (TextView)dialog.findViewById(android.R.id.message);
-        //messageView.setGravity(Gravity.CENTER);
+            LayoutInflater inflater = getLayoutInflater();
+            View dialogView = inflater.inflate(R.layout.match_dialog, null);
+
+            builder.setView(dialogView);
+            AlertDialog dialog = builder.show();
+
+            ListView matchListView = (ListView) dialog.findViewById(R.id.dialog_listview);
+            MatchAdapter matchAdapter = new MatchAdapter(this, R.layout.match_row_item, matches);
+            matchListView.setAdapter(matchAdapter);
+        }
+        else{
+            builder.setTitle("Cannot match without saved images");
+            builder.setPositiveButton("OK", null);
+            builder.show();
+        }
     }
 
     private double matchFeaturesFile(String fileName){

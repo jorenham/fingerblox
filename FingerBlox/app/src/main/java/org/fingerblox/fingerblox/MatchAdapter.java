@@ -9,12 +9,12 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import java.util.List;
 
-public class MatchAdapter extends ArrayAdapter<Pair<String, Integer>> {
-    public MatchAdapter(Context context, int textViewResourceId) {
+class MatchAdapter extends ArrayAdapter<Pair<String, Integer>> {
+    MatchAdapter(Context context, int textViewResourceId) {
         super(context, textViewResourceId);
     }
 
-    public MatchAdapter(Context context, int resource, List<Pair<String, Integer>> items) {
+    MatchAdapter(Context context, int resource, List<Pair<String, Integer>> items) {
         super(context, resource, items);
     }
 
